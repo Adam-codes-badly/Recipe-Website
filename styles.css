@@ -1,0 +1,272 @@
+:root {
+  --bg: #f4ead9;
+  --bg-accent: #e8b04f;
+  --ink: #2c170d;
+  --muted: #745544;
+  --card: rgba(255, 250, 242, 0.82);
+  --card-border: rgba(95, 55, 26, 0.14);
+  --shadow: 0 20px 60px rgba(69, 40, 14, 0.14);
+  --radius-lg: 28px;
+  --radius-md: 18px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(255, 239, 205, 0.95), transparent 34%),
+    radial-gradient(circle at bottom right, rgba(205, 92, 52, 0.18), transparent 30%),
+    linear-gradient(155deg, #f8efe0 0%, #f1dfc2 52%, #efc77b 100%);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    linear-gradient(rgba(102, 67, 37, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(102, 67, 37, 0.03) 1px, transparent 1px);
+  background-size: 28px 28px;
+  mask-image: linear-gradient(to bottom, rgba(0, 0, 0, 0.9), transparent 85%);
+}
+
+.page-shell {
+  width: min(1120px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 3rem 0 4rem;
+}
+
+.hero {
+  padding: 1rem 0 2.5rem;
+}
+
+.eyebrow,
+.card-kicker {
+  margin: 0 0 0.45rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.hero h1,
+.card-heading h2 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-weight: 700;
+  line-height: 0.96;
+}
+
+.hero h1 {
+  max-width: 10ch;
+  font-size: clamp(3.4rem, 9vw, 6.5rem);
+}
+
+.hero-copy {
+  max-width: 42rem;
+  margin: 1rem 0 0;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.recipe-layout {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: minmax(260px, 320px) 1fr;
+  align-items: start;
+}
+
+.recipe-card {
+  border: 1px solid var(--card-border);
+  border-radius: var(--radius-lg);
+  background: var(--card);
+  backdrop-filter: blur(12px);
+  box-shadow: var(--shadow);
+}
+
+.controls-card {
+  position: sticky;
+  top: 1rem;
+  padding: 1.5rem;
+}
+
+.recipe-content {
+  padding: 1.6rem;
+}
+
+.card-heading {
+  margin-bottom: 1.15rem;
+}
+
+.card-heading h2 {
+  font-size: clamp(1.8rem, 3vw, 2.6rem);
+}
+
+.scale-display {
+  display: grid;
+  gap: 0.15rem;
+  padding: 1rem 1.1rem;
+  border-radius: var(--radius-md);
+  background: linear-gradient(135deg, rgba(255, 241, 211, 0.95), rgba(255, 255, 255, 0.9));
+}
+
+#scale-value {
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+  font-size: 2.5rem;
+  font-weight: 700;
+}
+
+#yield-value,
+.control-note,
+.slider-label {
+  color: var(--muted);
+}
+
+.slider-label {
+  display: block;
+  margin-top: 1.25rem;
+  margin-bottom: 0.7rem;
+  line-height: 1.5;
+}
+
+#scale-slider {
+  width: 100%;
+  accent-color: #c55c31;
+}
+
+.slider-ticks {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 0.5rem;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.control-note {
+  margin: 1rem 0 0;
+  line-height: 1.55;
+}
+
+.section-block + .section-block {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid rgba(95, 55, 26, 0.12);
+}
+
+.ingredients-list,
+.notes-list,
+.method-list {
+  margin: 0;
+  padding: 0;
+}
+
+.ingredients-list,
+.notes-list {
+  list-style: none;
+}
+
+.ingredients-list {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.ingredients-list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.85rem 1rem;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.62);
+}
+
+.ingredient-name {
+  font-weight: 600;
+}
+
+.ingredient-amount {
+  text-align: right;
+  color: var(--muted);
+}
+
+.method-list {
+  display: grid;
+  gap: 0.9rem;
+  padding-left: 1.4rem;
+}
+
+.method-list li {
+  padding-left: 0.45rem;
+  line-height: 1.72;
+}
+
+.step-amount {
+  font-weight: 700;
+  color: #8f3418;
+}
+
+.notes-list {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.notes-list li {
+  padding: 0.85rem 1rem;
+  border-left: 4px solid rgba(197, 92, 49, 0.55);
+  background: rgba(255, 247, 233, 0.8);
+  border-radius: 0 14px 14px 0;
+  line-height: 1.6;
+}
+
+@media (max-width: 900px) {
+  .recipe-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .controls-card {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .page-shell {
+    width: min(100% - 1rem, 1120px);
+    padding-top: 1.5rem;
+  }
+
+  .hero {
+    padding-bottom: 1.75rem;
+  }
+
+  .hero h1 {
+    max-width: none;
+  }
+
+  .recipe-content,
+  .controls-card {
+    padding: 1.2rem;
+  }
+
+  .ingredients-list li {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .ingredient-amount {
+    text-align: left;
+  }
+}
