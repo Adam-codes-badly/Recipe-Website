@@ -3,89 +3,57 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Favourite Recipes | Pastel de Nata</title>
+    <title>Favourite Recipes</title>
     <meta
       name="description"
-      content="A static recipe page for pastel de nata with live ingredient scaling and quantities embedded in the method."
+      content="Browse and search a growing collection of favourite recipes with dedicated recipe pages and live scaling."
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <div class="page-shell">
-      <header class="hero">
+      <header class="hero home-hero">
         <p class="eyebrow">Favourite Recipes</p>
-        <h1>Pastel de Nata</h1>
+        <h1>Find the recipe you want to cook next.</h1>
         <p class="hero-copy">
-          Portuguese custard tarts with crisp pastry, a warm cinnamon custard,
-          and a scale control that keeps the method and ingredient list aligned.
+          A small static recipe collection built for GitHub Pages. Every recipe
+          has live scaling and quantities embedded directly into the method.
         </p>
       </header>
 
-      <main class="recipe-layout">
-        <aside class="recipe-card controls-card" aria-labelledby="scale-title">
+      <main class="home-layout">
+        <section class="recipe-card search-card" aria-labelledby="search-title">
           <div class="card-heading">
-            <p class="card-kicker">Recipe Scale</p>
-            <h2 id="scale-title">Adjust the batch</h2>
+            <p class="card-kicker">Search</p>
+            <h2 id="search-title">Browse recipes</h2>
           </div>
-
-          <div class="scale-display">
-            <span id="scale-value">1x</span>
-            <span id="yield-value">Makes about 12 tarts</span>
-          </div>
-
-          <label class="slider-label" for="scale-slider">
-            Move the slider to make a smaller or larger batch.
+          <label class="search-label" for="recipe-search">
+            Search by title, flavour, or category.
           </label>
           <input
-            id="scale-slider"
-            type="range"
-            min="0.5"
-            max="3"
-            step="0.25"
-            value="1"
+            id="recipe-search"
+            class="search-input"
+            type="search"
+            placeholder="Try pastry, lemon, tart, cake..."
+            autocomplete="off"
           />
-
-          <div class="slider-ticks" aria-hidden="true">
-            <span>0.5x</span>
-            <span>1x</span>
-            <span>2x</span>
-            <span>3x</span>
+          <div class="filter-block">
+            <p class="filter-label">Filter by tag</p>
+            <div id="filter-bar" class="filter-bar" aria-label="Recipe filters"></div>
           </div>
+          <p id="search-summary" class="search-summary">Showing 2 recipes</p>
+        </section>
 
-          <p class="control-note">
-            Countable ingredients are rounded to sensible whole values so the
-            instructions still read like a real recipe.
-          </p>
-        </aside>
-
-        <article class="recipe-card recipe-content">
-          <section class="section-block" aria-labelledby="ingredients-title">
-            <div class="card-heading">
-              <p class="card-kicker">Ingredients</p>
-              <h2 id="ingredients-title">For the pastry and custard</h2>
-            </div>
-            <ul id="ingredients-list" class="ingredients-list"></ul>
-          </section>
-
-          <section class="section-block" aria-labelledby="method-title">
-            <div class="card-heading">
-              <p class="card-kicker">Method</p>
-              <h2 id="method-title">Bake until blistered and glossy</h2>
-            </div>
-            <ol id="method-list" class="method-list"></ol>
-          </section>
-
-          <section class="section-block notes-block" aria-labelledby="notes-title">
-            <div class="card-heading">
-              <p class="card-kicker">Notes</p>
-              <h2 id="notes-title">Serving tips</h2>
-            </div>
-            <ul id="notes-list" class="notes-list"></ul>
-          </section>
-        </article>
+        <section aria-labelledby="recipe-list-title">
+          <div class="card-heading list-heading">
+            <p class="card-kicker">Collection</p>
+            <h2 id="recipe-list-title">Recipe index</h2>
+          </div>
+          <div id="recipe-grid" class="recipe-grid"></div>
+        </section>
       </main>
     </div>
 
-    <script type="module" src="./app.js"></script>
+    <script type="module" src="./home.js"></script>
   </body>
 </html>
