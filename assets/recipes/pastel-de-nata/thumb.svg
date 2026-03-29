@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="title desc">
+  <title id="title">Pastel de nata thumbnail</title>
+  <desc id="desc">Stylised Portuguese custard tart thumbnail.</desc>
+  <rect width="800" height="500" fill="#f7d48a" />
+  <circle cx="220" cy="240" r="120" fill="#d99842" />
+  <circle cx="220" cy="240" r="82" fill="#f2d286" />
+  <circle cx="400" cy="225" r="120" fill="#d99842" />
+  <circle cx="400" cy="225" r="82" fill="#f2d286" />
+  <circle cx="580" cy="250" r="120" fill="#d99842" />
+  <circle cx="580" cy="250" r="82" fill="#f2d286" />
+  <g fill="#9a451f">
+    <circle cx="195" cy="220" r="10" />
+    <circle cx="248" cy="202" r="12" />
+    <circle cx="420" cy="212" r="13" />
+    <circle cx="552" cy="230" r="10" />
+    <circle cx="620" cy="272" r="14" />
+  </g>
+</svg>

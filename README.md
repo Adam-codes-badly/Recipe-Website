@@ -115,6 +115,12 @@ Adding a new recipe requires two steps:
 1. Add the recipe JSON file in `recipes/`
 2. Add the recipe summary to `recipes/index.json`
 
+The manifest is the array stored in:
+
+- `recipes/index.json`
+
+Each recipe contributes one object to that array. The homepage reads this file to build the recipe cards, thumbnails, search index, and filter tags.
+
 ### Step 1: Add the recipe JSON file
 
 Create a new file such as `recipes/banana-bread.json`.
@@ -287,6 +293,15 @@ Add a summary entry to `recipes/index.json` using the same:
 
 The home page uses this file to build the recipe list and filters, so the summary should stay lightweight.
 
+In practice:
+
+- open `recipes/index.json`
+- add a new object to the top-level array
+- use the builder's `Manifest entry output` box as the exact object to paste in
+- keep the JSON comma-separated correctly between entries
+
+The builder does not automatically write into `recipes/index.json`; it gives you the exact manifest object to paste into that file.
+
 ## Recommended Workflow For Future Recipes
 
 1. Copy an existing recipe JSON file in `recipes/`
@@ -326,8 +341,10 @@ What it does:
 3. Optionally add an OpenAI API key for AI-assisted imports.
 4. Review the generated draft fields.
 5. Export the recipe JSON and manifest entry.
-6. Save any personal photo under `assets/recipes/<slug>/`.
-7. Commit the updated JSON and image assets.
+6. Save the recipe JSON as `recipes/<slug>.json`.
+7. Paste the manifest output into the array in `recipes/index.json`.
+8. Save any personal photo under `assets/recipes/<slug>/`.
+9. Commit the updated JSON and image assets.
 
 ### Builder notes
 

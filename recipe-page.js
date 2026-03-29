@@ -252,6 +252,7 @@ function renderRecipePhoto(currentRecipe) {
 
   recipePhoto.src = chosen?.src ?? PHOTO_PLACEHOLDER;
   recipePhoto.alt = media.alt ?? `${currentRecipe.title} recipe photo`;
+  recipePhoto.addEventListener("error", handleRecipePhotoError, { once: true });
 
   if (!chosen?.creditText) {
     recipePhotoCredit.textContent = chosen?.src ? "" : "Photo placeholder shown until you add a personal or stock image.";
@@ -269,4 +270,9 @@ function renderRecipePhoto(currentRecipe) {
   link.target = "_blank";
   link.rel = "noreferrer";
   recipePhotoCredit.replaceChildren(link);
+}
+
+function handleRecipePhotoError() {
+  recipePhoto.src = PHOTO_PLACEHOLDER;
+  recipePhotoCredit.textContent = "Recipe photo unavailable, so the shared placeholder is shown instead.";
 }

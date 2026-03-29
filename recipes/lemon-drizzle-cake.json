@@ -8,10 +8,13 @@
   "media": {
     "alt": "Slices of lemon drizzle cake on a board.",
     "primaryPhoto": null,
+    "thumbnailPhoto": {
+      "src": "./assets/recipes/lemon-drizzle-cake/hero.jpg"
+    },
     "fallbackPhoto": {
-      "src": "https://images.pexels.com/photos/2323202/pexels-photo-2323202.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
-      "creditText": "Stock photo from Pexels",
-      "creditUrl": "https://www.pexels.com/photo/sliced-lemon-on-heart-shaped-cake-2323202/"
+      "src": "./assets/recipes/lemon-drizzle-cake/hero.jpg",
+      "creditText": "Photo by Arun Thomas on Pexels",
+      "creditUrl": "https://www.pexels.com/photo/close-up-photograph-of-a-lemon-cake-8211178/"
     }
   },
   "baseYield": 8,

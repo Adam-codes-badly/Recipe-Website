@@ -9,10 +9,13 @@
     "media": {
       "alt": "Pastel de nata on a serving plate.",
       "primaryPhoto": null,
+      "thumbnailPhoto": {
+        "src": "./assets/recipes/pastel-de-nata/hero.jpg"
+      },
       "fallbackPhoto": {
-        "src": "https://images.pexels.com/photos/34334096/pexels-photo-34334096.jpeg?cs=srgb&dl=pexels-jacqueline-goncalves-2155137161-34334096.jpg&fm=jpg",
-        "creditText": "Stock photo from Pexels",
-        "creditUrl": "https://www.pexels.com/photo/delicious-portuguese-pastel-de-nata-close-up-34334096/"
+        "src": "./assets/recipes/pastel-de-nata/hero.jpg",
+        "creditText": "Photo by Regina Ferraz on Pexels",
+        "creditUrl": "https://www.pexels.com/search/pastel%20de%20nata/"
       }
     },
     "baseYield": 12,
@@ -28,13 +31,59 @@
     "media": {
       "alt": "Slices of lemon drizzle cake on a board.",
       "primaryPhoto": null,
+      "thumbnailPhoto": {
+        "src": "./assets/recipes/lemon-drizzle-cake/hero.jpg"
+      },
       "fallbackPhoto": {
-        "src": "https://images.pexels.com/photos/2323202/pexels-photo-2323202.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
-        "creditText": "Stock photo from Pexels",
-        "creditUrl": "https://www.pexels.com/photo/sliced-lemon-on-heart-shaped-cake-2323202/"
+        "src": "./assets/recipes/lemon-drizzle-cake/hero.jpg",
+        "creditText": "Photo by Arun Thomas on Pexels",
+        "creditUrl": "https://www.pexels.com/photo/close-up-photograph-of-a-lemon-cake-8211178/"
       }
     },
     "baseYield": 8,
     "yieldLabel": "slices"
-  }
+  },
+  {
+  "slug": "chilli-broccoli-salad",
+  "title": "Chilli Broccoli Salad",
+  "description": "A light, bright café salad of broccoli, toasted pistachios, dates and pumpkin seeds, tossed with mint, coriander and a zesty lime & chilli dressing. Ready in 20 minutes — perfect as a lunch or a side.",
+  "category": "Salad",
+  "tags": [
+    "salad",
+    "vegetarian",
+    "vegan",
+    "quick",
+    "healthy",
+    "gluten-free",
+    "side-dish",
+    "broccoli",
+    "pistachio"
+  ],
+  "searchTags": [
+    "broccoli",
+    "salad",
+    "lime",
+    "chilli",
+    "pistachio",
+    "dates",
+    "pumpkin seeds",
+    "mint",
+    "quick recipes",
+    "vegetarian"
+  ],
+  "media": {
+    "alt": "Chilli broccoli salad with pistachios, pumpkin seeds and dates",
+    "primaryPhoto": null,
+    "thumbnailPhoto": {
+      "src": "./assets/placeholders/recipe-photo.svg"
+    },
+    "fallbackPhoto": {
+      "src": "./assets/placeholders/recipe-photo.svg",
+      "creditText": "",
+      "creditUrl": ""
+    }
+  },
+  "baseYield": 2,
+  "yieldLabel": "servings"
+}
 ]

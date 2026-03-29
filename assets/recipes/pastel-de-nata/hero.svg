@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">Pastel de nata illustration</title>
+  <desc id="desc">Stylised tray of Portuguese custard tarts.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#fff4dc" />
+      <stop offset="100%" stop-color="#e8b04f" />
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)" />
+  <circle cx="1320" cy="170" r="160" fill="#fff7eb" opacity="0.45" />
+  <rect x="190" y="190" width="1220" height="520" rx="42" fill="#fffaf2" stroke="#b37b44" stroke-opacity="0.28" stroke-width="8" />
+  <g transform="translate(300 280)">
+    <g>
+      <circle cx="160" cy="150" r="120" fill="#d99842" />
+      <circle cx="160" cy="150" r="86" fill="#f2d286" />
+      <g fill="#9a451f">
+        <circle cx="125" cy="125" r="11" />
+        <circle cx="198" cy="118" r="10" />
+        <circle cx="214" cy="175" r="13" />
+      </g>
+    </g>
+    <g transform="translate(350 0)">
+      <circle cx="160" cy="150" r="120" fill="#d99842" />
+      <circle cx="160" cy="150" r="86" fill="#f2d286" />
+      <g fill="#9a451f">
+        <circle cx="124" cy="140" r="10" />
+        <circle cx="192" cy="115" r="13" />
+        <circle cx="214" cy="182" r="12" />
+      </g>
+    </g>
+    <g transform="translate(700 0)">
+      <circle cx="160" cy="150" r="120" fill="#d99842" />
+      <circle cx="160" cy="150" r="86" fill="#f2d286" />
+      <g fill="#9a451f">
+        <circle cx="138" cy="132" r="11" />
+        <circle cx="195" cy="130" r="9" />
+        <circle cx="205" cy="176" r="14" />
+      </g>
+    </g>
+  </g>
+  <text x="800" y="805" fill="#73472b" font-family="Georgia, serif" font-size="52" text-anchor="middle">
+    Pastel de Nata
+  </text>
+</svg>

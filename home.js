@@ -61,6 +61,13 @@ function renderRecipes(recipeList, query = "") {
       photo.src = photoChoice.src;
       photo.alt = photoChoice.alt;
       photo.loading = "lazy";
+      photo.addEventListener("error", () => {
+        if (photo.dataset.fallbackApplied === "true") {
+          return;
+        }
+        photo.dataset.fallbackApplied = "true";
+        photo.src = PHOTO_PLACEHOLDER;
+      });
       media.append(photo);
 
       const meta = document.createElement("p");
@@ -134,7 +141,9 @@ async function fetchJson(path) {
 
 function pickRecipePhoto(recipe) {
   const media = recipe.media ?? {};
-  const chosen = media.primaryPhoto?.src
+  const chosen = media.thumbnailPhoto?.src
+    ? media.thumbnailPhoto
+    : media.primaryPhoto?.src
     ? media.primaryPhoto
     : media.fallbackPhoto?.src
       ? media.fallbackPhoto
