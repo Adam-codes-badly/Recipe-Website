@@ -1,6 +1,7 @@
 const STORAGE_KEY = "recipe-builder-openai-key";
 const MODEL_KEY = "recipe-builder-openai-model";
 const DEFAULT_MODEL = "gpt-5-mini";
+const PHOTO_PLACEHOLDER = "./assets/placeholders/recipe-photo.svg";
 
 const appState = {
   mode: "plain",
@@ -302,7 +303,9 @@ function buildPrompt(mode) {
     "Infer tags and searchTags that help site browsing.",
     "Set photoAlt based on the dish.",
     "Leave primaryPhoto empty.",
-    "Leave fallbackPhoto and photoCredit fields empty unless the source explicitly provides a usable image.",
+    "Never invent or borrow another recipe's image.",
+    "Leave fallbackPhoto and photoCredit fields empty unless the source explicitly provides a usable stock image.",
+    "Empty photo fields should mean the site uses a shared placeholder image until a real photo is added.",
     "Method steps should be plain text steps. Do not tokenise them.",
     `Source mode: ${mode}.`,
   ].join(" ");
@@ -768,6 +771,10 @@ function refreshOutputs() {
 }
 
 function compileDraft(draft) {
+  const primaryPhotoSrc = draft.primaryPhoto.trim();
+  const fallbackPhotoSrc = draft.fallbackPhoto.trim();
+  const thumbnailSrc = primaryPhotoSrc || fallbackPhotoSrc || PHOTO_PLACEHOLDER;
+  const fallbackSrc = fallbackPhotoSrc || PHOTO_PLACEHOLDER;
   const normalizedIngredients = draft.ingredients.map((ingredient) => {
     const unit = ingredient.countable ? "count" : ingredient.unit || "count";
     const format = {};
@@ -801,12 +808,15 @@ function compileDraft(draft) {
     searchTags: draft.searchTags,
     media: {
       alt: draft.photoAlt || `${draft.title} recipe photo`,
-      primaryPhoto: draft.primaryPhoto
-        ? { src: draft.primaryPhoto.trim() }
+      primaryPhoto: primaryPhotoSrc
+        ? { src: primaryPhotoSrc }
         : null,
-      fallbackPhoto: draft.fallbackPhoto
+      thumbnailPhoto: {
+        src: thumbnailSrc,
+      },
+      fallbackPhoto: fallbackSrc
         ? {
-            src: draft.fallbackPhoto.trim(),
+            src: fallbackSrc,
             creditText: draft.photoCreditText.trim(),
             creditUrl: draft.photoCreditUrl.trim(),
           }

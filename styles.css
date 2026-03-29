@@ -297,14 +297,16 @@ body::before {
 
 .recipe-grid {
   display: grid;
-  gap: 1rem;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 1.25rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 320px));
+  justify-content: center;
   align-items: stretch;
 }
 
 .recipe-tile {
   display: grid;
   grid-template-rows: auto 1fr;
+  width: min(100%, 320px);
   overflow: hidden;
   border: 1px solid var(--card-border);
   border-radius: var(--radius-lg);

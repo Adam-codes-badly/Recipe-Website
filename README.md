@@ -61,11 +61,14 @@ There is now one shared recipe page at `recipe.html`.
 Each recipe can define:
 
 - a personal photo path in `media.primaryPhoto`
+- a card image path in `media.thumbnailPhoto`
 - a stock fallback in `media.fallbackPhoto`
 - alt text in `media.alt`
 - optional credit text and URL for stock images
 
-The page prefers your own image when present, then falls back to the stock image, then to a shared placeholder.
+The home page prefers `thumbnailPhoto`, then `primaryPhoto`, then `fallbackPhoto`, then a shared placeholder.
+
+The recipe page prefers your own image when present, then falls back to `fallbackPhoto`, then to the shared placeholder.
 
 Repo-owned recipe photos should live in:
 
@@ -225,6 +228,7 @@ Each recipe can include:
 
 - `media.alt`: alt text for the recipe image
 - `media.primaryPhoto.src`: your own preferred image path
+- `media.thumbnailPhoto.src`: the image used on the home page card
 - `media.fallbackPhoto.src`: a stock image URL used only when no personal image is set
 - `media.fallbackPhoto.creditText` and `media.fallbackPhoto.creditUrl`: attribution for stock images
 
@@ -232,7 +236,19 @@ Recommended approach:
 
 - keep your own photo in `assets/recipes/<slug>/`
 - point `primaryPhoto.src` at that local asset when available
-- keep a stock image in `fallbackPhoto` so the page never looks empty
+- use the same local photo for `thumbnailPhoto.src` unless you have a separate crop
+- if you do not yet have a real image, point both `thumbnailPhoto.src` and `fallbackPhoto.src` at `./assets/placeholders/recipe-photo.svg`
+- do not borrow another recipe's image just to make the card render
+
+### Builder photo output
+
+The recipe builder now exports a complete safe `media` block even when you leave the image fields blank:
+
+- `primaryPhoto` stays `null`
+- `thumbnailPhoto` defaults to `./assets/placeholders/recipe-photo.svg`
+- `fallbackPhoto` defaults to that same placeholder with empty credits
+
+That means new recipes should still appear on the home page and recipe page without needing a copied media block from an older recipe.
 
 ### Method step structure
 

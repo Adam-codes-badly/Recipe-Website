@@ -233,7 +233,9 @@ function renderMissingRecipe() {
 }
 
 async function fetchRecipe(recipeSlug) {
-  const response = await fetch(`./recipes/${encodeURIComponent(recipeSlug)}.json`);
+  const response = await fetch(`./recipes/${encodeURIComponent(recipeSlug)}.json`, {
+    cache: "no-store",
+  });
 
   if (!response.ok) {
     return null;

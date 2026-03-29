@@ -4,18 +4,19 @@ const recipeGrid = document.querySelector("#recipe-grid");
 const filterBar = document.querySelector("#filter-bar");
 const PHOTO_PLACEHOLDER = "./assets/placeholders/recipe-photo.svg";
 
-const recipes = await fetchJson("./recipes/index.json");
+const recipes = (await fetchJson("./recipes/index.json")).map(normalizeRecipeSummary);
 const availableFilters = ["All", ...new Set(recipes.flatMap((recipe) => recipe.searchTags ?? []))];
 let activeFilter = "All";
 
+searchInput.value = "";
 renderFilters();
-renderResults();
+renderResults("");
 
 searchInput.addEventListener("input", (event) => {
   renderResults(event.target.value.trim().toLowerCase());
 });
 
-function renderResults(query = searchInput.value.trim().toLowerCase()) {
+function renderResults(query = "") {
   const filtered = recipes.filter(
     (recipe) => matchesRecipe(recipe, query) && matchesFilter(recipe, activeFilter),
   );
@@ -130,7 +131,7 @@ function matchesFilter(recipe, filter) {
 }
 
 async function fetchJson(path) {
-  const response = await fetch(path);
+  const response = await fetch(path, { cache: "no-store" });
 
   if (!response.ok) {
     throw new Error(`Failed to load ${path}`);
@@ -152,5 +153,49 @@ function pickRecipePhoto(recipe) {
   return {
     src: chosen?.src ?? PHOTO_PLACEHOLDER,
     alt: media.alt ?? `${recipe.title} recipe photo`,
+  };
+}
+
+function normalizeRecipeSummary(recipe) {
+  return {
+    slug: String(recipe?.slug ?? ""),
+    title: String(recipe?.title ?? "Untitled Recipe"),
+    description: String(recipe?.description ?? ""),
+    category: String(recipe?.category ?? "Recipe"),
+    tags: Array.isArray(recipe?.tags) ? recipe.tags.map(String) : [],
+    searchTags: Array.isArray(recipe?.searchTags) ? recipe.searchTags.map(String) : [],
+    baseYield: Number(recipe?.baseYield ?? 0),
+    yieldLabel: String(recipe?.yieldLabel ?? "servings"),
+    media: normalizeMedia(recipe?.media),
+  };
+}
+
+function normalizeMedia(media) {
+  if (!media || typeof media !== "object") {
+    return {
+      alt: "",
+      primaryPhoto: null,
+      thumbnailPhoto: null,
+      fallbackPhoto: null,
+    };
+  }
+
+  return {
+    alt: String(media.alt ?? ""),
+    primaryPhoto: normalizePhotoRef(media.primaryPhoto),
+    thumbnailPhoto: normalizePhotoRef(media.thumbnailPhoto),
+    fallbackPhoto: normalizePhotoRef(media.fallbackPhoto),
+  };
+}
+
+function normalizePhotoRef(photo) {
+  if (!photo || typeof photo !== "object" || !photo.src) {
+    return null;
+  }
+
+  return {
+    src: String(photo.src),
+    creditText: String(photo.creditText ?? ""),
+    creditUrl: String(photo.creditUrl ?? ""),
   };
 }
