@@ -4,6 +4,7 @@ Static recipe website for GitHub Pages with:
 
 - a searchable home page
 - one shared recipe template page
+- photo support on recipe cards and recipe pages
 - ingredient quantities shown in both the ingredients list and the method
 - a scaling slider on every recipe page
 
@@ -16,6 +17,8 @@ The site currently has:
 - a shared stylesheet at `styles.css`
 - a recipe manifest at `recipes/index.json`
 - one JSON file per recipe in `recipes/`
+- a recipe photo convention under `assets/recipes/<slug>/`
+- a local authoring utility at `tools/recipe-builder/`
 - home page search/rendering logic in `home.js`
 - shared recipe page rendering and scaling logic in `recipe-page.js`
 - recipe data files in `recipes/`
@@ -47,10 +50,26 @@ There is now one shared recipe page at `recipe.html`.
 `recipe-page.js` reads the `slug` query parameter, fetches `recipes/<slug>.json`, and renders:
 
 - hero content
+- recipe photo
 - ingredient list
 - method steps
 - notes
 - scaled yield
+
+### Photos
+
+Each recipe can define:
+
+- a personal photo path in `media.primaryPhoto`
+- a stock fallback in `media.fallbackPhoto`
+- alt text in `media.alt`
+- optional credit text and URL for stock images
+
+The page prefers your own image when present, then falls back to the stock image, then to a shared placeholder.
+
+Repo-owned recipe photos should live in:
+
+- `assets/recipes/<slug>/`
 
 ### Scaling
 
@@ -83,8 +102,11 @@ For a static GitHub Pages site, this gives you a cleaner content model without i
 - `home.js`: fetches the recipe manifest, then renders and filters recipe cards
 - `recipe-page.js`: fetches one recipe JSON file, then renders scaling and method content
 - `styles.css`: shared styling for home and recipe pages
+- `assets/placeholders/recipe-photo.svg`: fallback image when no recipe photo is available
+- `assets/recipes/<slug>/`: your own recipe photos
 - `recipes/index.json`: lightweight list used by the home page
 - `recipes/*.json`: one full recipe per file
+- `tools/recipe-builder/`: local recipe creation tool
 
 ## Adding A New Recipe
 
@@ -107,6 +129,17 @@ Use this structure:
   "category": "Cake",
   "tags": ["tag-one", "tag-two"],
   "searchTags": ["Dessert", "Cake", "Easy"],
+  "media": {
+    "alt": "Photo description for accessibility.",
+    "primaryPhoto": {
+      "src": "./assets/recipes/your-recipe-slug/hero.jpg"
+    },
+    "fallbackPhoto": {
+      "src": "https://example.com/stock-photo.jpg",
+      "creditText": "Photo by Name on Source",
+      "creditUrl": "https://example.com/source-page"
+    }
+  },
   "baseYield": 8,
   "yieldLabel": "slices",
   "heroTitle": "Your Recipe Title",
@@ -180,6 +213,21 @@ Recommended approach:
 - keep `searchTags` clean and reusable across recipes, for example `["Dessert", "Cake", "Citrus"]`
 - reuse existing `searchTags` where possible so the filter list stays tidy
 
+### Photo metadata
+
+Each recipe can include:
+
+- `media.alt`: alt text for the recipe image
+- `media.primaryPhoto.src`: your own preferred image path
+- `media.fallbackPhoto.src`: a stock image URL used only when no personal image is set
+- `media.fallbackPhoto.creditText` and `media.fallbackPhoto.creditUrl`: attribution for stock images
+
+Recommended approach:
+
+- keep your own photo in `assets/recipes/<slug>/`
+- point `primaryPhoto.src` at that local asset when available
+- keep a stock image in `fallbackPhoto` so the page never looks empty
+
 ### Method step structure
 
 Each method step is an array of text fragments and ingredient references.
@@ -233,6 +281,7 @@ Add a summary entry to `recipes/index.json` using the same:
 - `category`
 - `tags`
 - `searchTags`
+- `media`
 - `baseYield`
 - `yieldLabel`
 
@@ -249,6 +298,43 @@ The home page uses this file to build the recipe list and filters, so the summar
 7. Test the slider at a few values like `0.5x`, `1x`, and `2x`
 8. Check that awkward ingredients like eggs still read sensibly
 9. Check that any split quantities in the method are correct
+10. Add a personal photo path or a stock fallback in `media`
+
+## Recipe Builder
+
+The easiest way to add recipes now is to use the local builder:
+
+- `tools/recipe-builder/index.html`
+
+The builder helps with three input styles:
+
+- pasted plain text
+- a recipe website URL
+- a photo of a recipe page
+
+What it does:
+
+- creates an editable draft instead of making you write raw JSON
+- exports the full `recipes/<slug>.json`
+- exports the matching manifest entry for `recipes/index.json`
+- lets you fill in photo paths and stock fallbacks
+
+### Builder workflow
+
+1. Open `tools/recipe-builder/index.html` in the local site.
+2. Paste recipe text, add a URL, or upload a recipe photo.
+3. Optionally add an OpenAI API key for AI-assisted imports.
+4. Review the generated draft fields.
+5. Export the recipe JSON and manifest entry.
+6. Save any personal photo under `assets/recipes/<slug>/`.
+7. Commit the updated JSON and image assets.
+
+### Builder notes
+
+- Plain text parsing works without an API key.
+- URL imports use a readable-text fetch helper and may still need a pasted page extract if a site blocks access.
+- Photo imports work best with an API key; otherwise add OCR text manually.
+- Generated steps are tokenised automatically, but complex split quantities may still need manual cleanup.
 
 ## Running Locally
 
@@ -274,6 +360,8 @@ http://127.0.0.1:8000/
 - Keep descriptions and tags useful so search works well
 - Reuse existing `searchTags` before inventing new ones unless a new filter is genuinely useful
 - Keep `recipes/index.json` small by storing only summary data there
+- Keep your own recipe photos in `assets/recipes/<slug>/`
+- Always set useful `media.alt` text for accessibility
 
 ## Current Limitation
 

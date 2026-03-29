@@ -5,6 +5,15 @@
   "category": "Pastry",
   "tags": ["portuguese", "tart", "custard", "pastry", "dessert"],
   "searchTags": ["Dessert", "Pastry", "Portuguese", "Custard", "Tart"],
+  "media": {
+    "alt": "Pastel de nata on a serving plate.",
+    "primaryPhoto": null,
+    "fallbackPhoto": {
+      "src": "https://images.pexels.com/photos/34334096/pexels-photo-34334096.jpeg?cs=srgb&dl=pexels-jacqueline-goncalves-2155137161-34334096.jpg&fm=jpg",
+      "creditText": "Stock photo from Pexels",
+      "creditUrl": "https://www.pexels.com/photo/delicious-portuguese-pastel-de-nata-close-up-34334096/"
+    }
+  },
   "baseYield": 12,
   "yieldLabel": "tarts",
   "heroTitle": "Pastel de Nata",

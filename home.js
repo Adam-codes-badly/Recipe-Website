@@ -2,6 +2,7 @@ const searchInput = document.querySelector("#recipe-search");
 const searchSummary = document.querySelector("#search-summary");
 const recipeGrid = document.querySelector("#recipe-grid");
 const filterBar = document.querySelector("#filter-bar");
+const PHOTO_PLACEHOLDER = "./assets/placeholders/recipe-photo.svg";
 
 const recipes = await fetchJson("./recipes/index.json");
 const availableFilters = ["All", ...new Set(recipes.flatMap((recipe) => recipe.searchTags ?? []))];
@@ -48,6 +49,20 @@ function renderRecipes(recipeList, query = "") {
       card.className = "recipe-tile";
       card.href = `./recipe.html?slug=${encodeURIComponent(recipe.slug)}`;
 
+      const media = document.createElement("div");
+      const photo = document.createElement("img");
+      const body = document.createElement("div");
+
+      media.className = "recipe-tile-media";
+      body.className = "recipe-tile-body";
+
+      const photoChoice = pickRecipePhoto(recipe);
+      photo.className = "recipe-tile-photo";
+      photo.src = photoChoice.src;
+      photo.alt = photoChoice.alt;
+      photo.loading = "lazy";
+      media.append(photo);
+
       const meta = document.createElement("p");
       meta.className = "recipe-tile-meta";
       meta.textContent = `${recipe.category} • Makes about ${recipe.baseYield} ${recipe.yieldLabel}`;
@@ -63,7 +78,8 @@ function renderRecipes(recipeList, query = "") {
       tags.className = "recipe-tags";
       tags.textContent = (recipe.searchTags ?? recipe.tags).map((tag) => `#${tag}`).join(" ");
 
-      card.append(meta, title, description, tags);
+      body.append(meta, title, description, tags);
+      card.append(media, body);
       return card;
     }),
   );
@@ -114,4 +130,18 @@ async function fetchJson(path) {
   }
 
   return response.json();
+}
+
+function pickRecipePhoto(recipe) {
+  const media = recipe.media ?? {};
+  const chosen = media.primaryPhoto?.src
+    ? media.primaryPhoto
+    : media.fallbackPhoto?.src
+      ? media.fallbackPhoto
+      : null;
+
+  return {
+    src: chosen?.src ?? PHOTO_PLACEHOLDER,
+    alt: media.alt ?? `${recipe.title} recipe photo`,
+  };
 }

@@ -1,0 +1,269 @@
+:root {
+  --bg: #f6ecdb;
+  --ink: #2a170e;
+  --muted: #755947;
+  --panel: rgba(255, 250, 244, 0.92);
+  --line: rgba(95, 55, 26, 0.14);
+  --accent: #b64f28;
+  --accent-soft: rgba(182, 79, 40, 0.12);
+  --shadow: 0 24px 60px rgba(69, 40, 14, 0.14);
+  --radius-lg: 26px;
+  --radius-md: 16px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--ink);
+  font-family: "Avenir Next", "Segoe UI", sans-serif;
+  background:
+    radial-gradient(circle at top left, rgba(255, 242, 212, 0.95), transparent 30%),
+    linear-gradient(150deg, #f9f1e4 0%, #f1e0c3 55%, #e7ba78 100%);
+}
+
+.builder-shell {
+  width: min(1220px, calc(100% - 2rem));
+  margin: 0 auto;
+  padding: 2.5rem 0 3rem;
+}
+
+.builder-hero {
+  margin-bottom: 1.5rem;
+}
+
+.builder-kicker,
+.panel-kicker {
+  margin: 0 0 0.35rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.builder-hero h1,
+.panel-heading h2,
+.collection-header h3 {
+  margin: 0;
+  font-family: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+}
+
+.builder-hero h1 {
+  font-size: clamp(3rem, 8vw, 5.6rem);
+  line-height: 0.96;
+}
+
+.builder-copy,
+.builder-meta,
+.helper-copy,
+.status-copy {
+  color: var(--muted);
+}
+
+.builder-copy {
+  max-width: 44rem;
+  margin: 1rem 0 0;
+  line-height: 1.7;
+}
+
+.builder-meta {
+  margin: 0.8rem 0 0;
+}
+
+.builder-layout {
+  display: grid;
+  gap: 1.5rem;
+}
+
+.panel {
+  padding: 1.4rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--panel);
+  box-shadow: var(--shadow);
+}
+
+.panel-heading {
+  margin-bottom: 1rem;
+}
+
+.panel-heading h2 {
+  font-size: clamp(1.7rem, 3vw, 2.5rem);
+}
+
+.api-grid,
+.editor-grid {
+  display: grid;
+  gap: 0.9rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+
+label {
+  display: grid;
+  gap: 0.45rem;
+  margin-top: 0.9rem;
+}
+
+label span {
+  font-weight: 600;
+}
+
+input,
+textarea,
+button {
+  font: inherit;
+}
+
+input,
+textarea {
+  width: 100%;
+  padding: 0.85rem 0.95rem;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.88);
+  color: var(--ink);
+}
+
+textarea {
+  resize: vertical;
+}
+
+input:focus,
+textarea:focus {
+  outline: 2px solid rgba(182, 79, 40, 0.26);
+  outline-offset: 2px;
+}
+
+button {
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.8);
+  color: var(--ink);
+  cursor: pointer;
+}
+
+button:hover,
+button:focus-visible {
+  border-color: rgba(182, 79, 40, 0.45);
+}
+
+.primary-button {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff7ee;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.mode-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.7rem;
+  margin-top: 1rem;
+}
+
+.mode-tab.is-active {
+  background: var(--accent-soft);
+  border-color: rgba(182, 79, 40, 0.45);
+}
+
+.mode-panel {
+  display: none;
+}
+
+.mode-panel.is-active {
+  display: block;
+}
+
+.photo-preview-shell {
+  display: grid;
+  place-items: center;
+  min-height: 220px;
+  margin-top: 1rem;
+  overflow: hidden;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.55);
+}
+
+#photo-preview {
+  width: 100%;
+  max-height: 360px;
+  object-fit: contain;
+}
+
+.collection-block {
+  margin-top: 1.25rem;
+}
+
+.collection-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+
+.collection-list {
+  display: grid;
+  gap: 0.9rem;
+  margin-top: 0.8rem;
+}
+
+.collection-card {
+  padding: 1rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.68);
+}
+
+.collection-card-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  margin-bottom: 0.8rem;
+}
+
+.inline-grid {
+  display: grid;
+  gap: 0.8rem;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+}
+
+.status-copy {
+  margin: 1rem 0 0;
+  min-height: 1.5rem;
+}
+
+code {
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+@media (max-width: 720px) {
+  .builder-shell {
+    width: min(100% - 1rem, 1220px);
+    padding-top: 1.4rem;
+  }
+
+  .panel {
+    padding: 1rem;
+  }
+
+  .collection-header,
+  .collection-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

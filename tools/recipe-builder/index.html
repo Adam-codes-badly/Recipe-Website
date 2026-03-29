@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Recipe Builder</title>
+    <meta
+      name="description"
+      content="Local authoring tool for generating recipe JSON and manifest entries for the Favourite Recipes site."
+    />
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="builder-shell">
+      <header class="builder-hero">
+        <p class="builder-kicker">Local Authoring Tool</p>
+        <h1>Recipe Builder</h1>
+        <p class="builder-copy">
+          Create recipe drafts from plain text, a recipe website URL, or a
+          recipe-book photo. Review the generated content, then export the JSON
+          files needed by the site.
+        </p>
+        <p class="builder-meta">
+          Output files:
+          <code>recipes/&lt;slug&gt;.json</code>,
+          <code>recipes/index.json</code>,
+          and optionally photos in <code>assets/recipes/&lt;slug&gt;/</code>.
+        </p>
+      </header>
+
+      <main class="builder-layout">
+        <section class="panel">
+          <div class="panel-heading">
+            <p class="panel-kicker">Assist</p>
+            <h2>Import source</h2>
+          </div>
+
+          <div class="api-grid">
+            <label>
+              <span>OpenAI API key</span>
+              <input id="api-key" type="password" placeholder="Optional for AI-assisted imports" autocomplete="off" />
+            </label>
+            <label>
+              <span>Model</span>
+              <input id="api-model" type="text" value="gpt-5-mini" autocomplete="off" />
+            </label>
+          </div>
+
+          <div class="mode-tabs" role="tablist" aria-label="Import modes">
+            <button class="mode-tab is-active" type="button" data-mode="plain">Plain text</button>
+            <button class="mode-tab" type="button" data-mode="url">Recipe URL</button>
+            <button class="mode-tab" type="button" data-mode="photo">Recipe photo</button>
+          </div>
+
+          <div id="mode-plain" class="mode-panel is-active">
+            <label>
+              <span>Recipe text</span>
+              <textarea id="plain-text" rows="14" placeholder="Paste a recipe here. Headings like Ingredients / Method / Notes help the parser."></textarea>
+            </label>
+          </div>
+
+          <div id="mode-url" class="mode-panel">
+            <label>
+              <span>Recipe URL</span>
+              <input id="recipe-url" type="url" placeholder="https://example.com/recipe" />
+            </label>
+            <div class="button-row">
+              <button id="fetch-url" type="button">Fetch readable text</button>
+            </div>
+            <label>
+              <span>Fetched or pasted page text</span>
+              <textarea id="url-text" rows="12" placeholder="If direct fetch is blocked, paste the page text or HTML here."></textarea>
+            </label>
+          </div>
+
+          <div id="mode-photo" class="mode-panel">
+            <label>
+              <span>Recipe-book photo</span>
+              <input id="recipe-photo-input" type="file" accept="image/*" />
+            </label>
+            <div class="photo-preview-shell">
+              <img id="photo-preview" alt="Recipe import preview" />
+            </div>
+            <p class="helper-copy">
+              With an API key, the tool can send the image directly for
+              interpretation. Without one, add OCR text manually below.
+            </p>
+            <label>
+              <span>Optional OCR or pasted text</span>
+              <textarea id="photo-text" rows="10" placeholder="Paste OCR text here if you already have it."></textarea>
+            </label>
+          </div>
+
+          <div class="button-row">
+            <button id="generate-draft" type="button" class="primary-button">Generate draft</button>
+            <button id="reset-draft" type="button">Reset form</button>
+          </div>
+
+          <p id="import-status" class="status-copy">Ready to build a recipe draft.</p>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <p class="panel-kicker">Edit</p>
+            <h2>Recipe draft</h2>
+          </div>
+
+          <div class="editor-grid">
+            <label><span>Title</span><input id="field-title" type="text" /></label>
+            <label><span>Slug</span><input id="field-slug" type="text" /></label>
+            <label><span>Category</span><input id="field-category" type="text" /></label>
+            <label><span>Yield label</span><input id="field-yield-label" type="text" /></label>
+            <label><span>Base yield</span><input id="field-base-yield" type="number" min="1" step="1" /></label>
+            <label><span>Hero title</span><input id="field-hero-title" type="text" /></label>
+          </div>
+
+          <label>
+            <span>Description</span>
+            <textarea id="field-description" rows="3"></textarea>
+          </label>
+          <label>
+            <span>Hero copy</span>
+            <textarea id="field-hero-copy" rows="4"></textarea>
+          </label>
+
+          <div class="editor-grid">
+            <label><span>Ingredients heading</span><input id="field-ingredients-heading" type="text" /></label>
+            <label><span>Method heading</span><input id="field-method-heading" type="text" /></label>
+            <label><span>Notes heading</span><input id="field-notes-heading" type="text" /></label>
+            <label><span>Tags</span><input id="field-tags" type="text" placeholder="cake, lemon, dessert" /></label>
+            <label><span>Search tags</span><input id="field-search-tags" type="text" placeholder="Dessert, Cake, Citrus" /></label>
+            <label><span>Photo alt text</span><input id="field-photo-alt" type="text" /></label>
+          </div>
+
+          <div class="editor-grid">
+            <label><span>Your photo path</span><input id="field-primary-photo" type="text" placeholder="./assets/recipes/slug/hero.jpg" /></label>
+            <label><span>Stock photo URL</span><input id="field-fallback-photo" type="text" placeholder="https://..." /></label>
+            <label><span>Photo credit text</span><input id="field-photo-credit-text" type="text" /></label>
+            <label><span>Photo credit URL</span><input id="field-photo-credit-url" type="text" placeholder="https://..." /></label>
+          </div>
+
+          <div class="collection-block">
+            <div class="collection-header">
+              <h3>Ingredients</h3>
+              <button id="add-ingredient" type="button">Add ingredient</button>
+            </div>
+            <div id="ingredients-editor" class="collection-list"></div>
+          </div>
+
+          <div class="collection-block">
+            <div class="collection-header">
+              <h3>Method steps</h3>
+              <button id="add-step" type="button">Add step</button>
+            </div>
+            <div id="steps-editor" class="collection-list"></div>
+          </div>
+
+          <div class="collection-block">
+            <div class="collection-header">
+              <h3>Notes</h3>
+              <button id="add-note" type="button">Add note</button>
+            </div>
+            <div id="notes-editor" class="collection-list"></div>
+          </div>
+        </section>
+
+        <section class="panel">
+          <div class="panel-heading">
+            <p class="panel-kicker">Export</p>
+            <h2>Generated files</h2>
+          </div>
+
+          <div class="button-row">
+            <button id="copy-recipe-json" type="button">Copy recipe JSON</button>
+            <button id="copy-manifest-json" type="button">Copy manifest entry</button>
+            <button id="download-recipe-json" type="button" class="primary-button">Download recipe JSON</button>
+          </div>
+
+          <label>
+            <span>Recipe file output</span>
+            <textarea id="recipe-json-output" rows="18" readonly></textarea>
+          </label>
+
+          <label>
+            <span>Manifest entry output</span>
+            <textarea id="manifest-json-output" rows="10" readonly></textarea>
+          </label>
+
+          <p class="helper-copy">
+            Review split-use ingredients carefully. The builder tokenises method
+            steps automatically, but complex recipes may still need a manual
+            touch-up before you commit the JSON.
+          </p>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="./app.js"></script>
+  </body>
+</html>

@@ -12,9 +12,12 @@ const yieldValue = document.querySelector("#yield-value");
 const ingredientsList = document.querySelector("#ingredients-list");
 const methodList = document.querySelector("#method-list");
 const notesList = document.querySelector("#notes-list");
+const recipePhoto = document.querySelector("#recipe-photo");
+const recipePhotoCredit = document.querySelector("#recipe-photo-credit");
 const params = new URLSearchParams(window.location.search);
 const slug = params.get("slug");
 const recipe = slug ? await fetchRecipe(slug) : null;
+const PHOTO_PLACEHOLDER = "./assets/placeholders/recipe-photo.svg";
 
 if (!recipe) {
   renderMissingRecipe();
@@ -36,6 +39,7 @@ function renderStaticContent() {
   document.querySelector("#ingredients-heading").textContent = recipe.ingredientsHeading;
   document.querySelector("#method-heading").textContent = recipe.methodHeading;
   document.querySelector("#notes-heading").textContent = recipe.notesHeading;
+  renderRecipePhoto(recipe);
 
   notesList.replaceChildren(
     ...recipe.notes.map((note) => {
@@ -223,6 +227,9 @@ function renderMissingRecipe() {
   document.querySelector(".recipe-layout").classList.add("is-missing");
   slider.disabled = true;
   yieldValue.textContent = "Recipe data unavailable";
+  recipePhoto.src = PHOTO_PLACEHOLDER;
+  recipePhoto.alt = "Recipe image placeholder";
+  recipePhotoCredit.textContent = "";
 }
 
 async function fetchRecipe(recipeSlug) {
@@ -233,4 +240,33 @@ async function fetchRecipe(recipeSlug) {
   }
 
   return response.json();
+}
+
+function renderRecipePhoto(currentRecipe) {
+  const media = currentRecipe.media ?? {};
+  const chosen = media.primaryPhoto?.src
+    ? media.primaryPhoto
+    : media.fallbackPhoto?.src
+      ? media.fallbackPhoto
+      : null;
+
+  recipePhoto.src = chosen?.src ?? PHOTO_PLACEHOLDER;
+  recipePhoto.alt = media.alt ?? `${currentRecipe.title} recipe photo`;
+
+  if (!chosen?.creditText) {
+    recipePhotoCredit.textContent = chosen?.src ? "" : "Photo placeholder shown until you add a personal or stock image.";
+    return;
+  }
+
+  if (!chosen.creditUrl) {
+    recipePhotoCredit.textContent = chosen.creditText;
+    return;
+  }
+
+  const link = document.createElement("a");
+  link.href = chosen.creditUrl;
+  link.textContent = chosen.creditText;
+  link.target = "_blank";
+  link.rel = "noreferrer";
+  recipePhotoCredit.replaceChildren(link);
 }

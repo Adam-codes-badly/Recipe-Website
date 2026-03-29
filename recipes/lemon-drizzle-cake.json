@@ -5,6 +5,15 @@
   "category": "Cake",
   "tags": ["lemon", "cake", "loaf", "bake", "dessert"],
   "searchTags": ["Dessert", "Cake", "Lemon", "Loaf", "Citrus"],
+  "media": {
+    "alt": "Slices of lemon drizzle cake on a board.",
+    "primaryPhoto": null,
+    "fallbackPhoto": {
+      "src": "https://images.pexels.com/photos/2323202/pexels-photo-2323202.jpeg?auto=compress&cs=tinysrgb&dpr=1&w=500",
+      "creditText": "Stock photo from Pexels",
+      "creditUrl": "https://www.pexels.com/photo/sliced-lemon-on-heart-shaped-cake-2323202/"
+    }
+  },
   "baseYield": 8,
   "yieldLabel": "slices",
   "heroTitle": "Lemon Drizzle Cake",
