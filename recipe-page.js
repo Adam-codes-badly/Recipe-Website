@@ -1,5 +1,3 @@
-import { getRecipeBySlug } from "./data.js";
-
 const FRACTIONS = [
   { value: 0.25, label: "1/4" },
   { value: 1 / 3, label: "1/3" },
@@ -8,26 +6,26 @@ const FRACTIONS = [
   { value: 0.75, label: "3/4" },
 ];
 
-const page = document.querySelector("[data-recipe-slug]");
-const recipe = getRecipeBySlug(page.dataset.recipeSlug);
-
-if (!recipe) {
-  throw new Error(`Unknown recipe slug: ${page.dataset.recipeSlug}`);
-}
-
 const slider = document.querySelector("#scale-slider");
 const scaleValue = document.querySelector("#scale-value");
 const yieldValue = document.querySelector("#yield-value");
 const ingredientsList = document.querySelector("#ingredients-list");
 const methodList = document.querySelector("#method-list");
 const notesList = document.querySelector("#notes-list");
+const params = new URLSearchParams(window.location.search);
+const slug = params.get("slug");
+const recipe = slug ? await fetchRecipe(slug) : null;
 
-renderStaticContent();
-renderRecipe(Number(slider.value));
+if (!recipe) {
+  renderMissingRecipe();
+} else {
+  renderStaticContent();
+  renderRecipe(Number(slider.value));
 
-slider.addEventListener("input", (event) => {
-  renderRecipe(Number(event.target.value));
-});
+  slider.addEventListener("input", (event) => {
+    renderRecipe(Number(event.target.value));
+  });
+}
 
 function renderStaticContent() {
   document.title = `Favourite Recipes | ${recipe.title}`;
@@ -211,4 +209,28 @@ function toFractionString(quantity) {
 
 function formatYield(scale) {
   return Math.max(1, Math.round(recipe.baseYield * scale));
+}
+
+function renderMissingRecipe() {
+  document.title = "Favourite Recipes | Recipe not found";
+  document.querySelector("#site-title").textContent = "Recipe not found";
+  document.querySelector("#site-copy").textContent =
+    "This recipe could not be loaded. Return to the home page and choose a recipe from the list.";
+  document.querySelector("#crumb-current").textContent = "Missing recipe";
+  document.querySelector("#ingredients-heading").textContent = "Unavailable";
+  document.querySelector("#method-heading").textContent = "Unavailable";
+  document.querySelector("#notes-heading").textContent = "Unavailable";
+  document.querySelector(".recipe-layout").classList.add("is-missing");
+  slider.disabled = true;
+  yieldValue.textContent = "Recipe data unavailable";
+}
+
+async function fetchRecipe(recipeSlug) {
+  const response = await fetch(`./recipes/${encodeURIComponent(recipeSlug)}.json`);
+
+  if (!response.ok) {
+    return null;
+  }
+
+  return response.json();
 }

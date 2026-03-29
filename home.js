@@ -1,10 +1,9 @@
-import { recipes } from "./data.js";
-
 const searchInput = document.querySelector("#recipe-search");
 const searchSummary = document.querySelector("#search-summary");
 const recipeGrid = document.querySelector("#recipe-grid");
 const filterBar = document.querySelector("#filter-bar");
 
+const recipes = await fetchJson("./recipes/index.json");
 const availableFilters = ["All", ...new Set(recipes.flatMap((recipe) => recipe.searchTags ?? []))];
 let activeFilter = "All";
 
@@ -47,7 +46,7 @@ function renderRecipes(recipeList, query = "") {
     ...recipeList.map((recipe) => {
       const card = document.createElement("a");
       card.className = "recipe-tile";
-      card.href = `./recipes/${recipe.slug}.html`;
+      card.href = `./recipe.html?slug=${encodeURIComponent(recipe.slug)}`;
 
       const meta = document.createElement("p");
       meta.className = "recipe-tile-meta";
@@ -105,4 +104,14 @@ function matchesFilter(recipe, filter) {
   }
 
   return (recipe.searchTags ?? []).includes(filter);
+}
+
+async function fetchJson(path) {
+  const response = await fetch(path);
+
+  if (!response.ok) {
+    throw new Error(`Failed to load ${path}`);
+  }
+
+  return response.json();
 }

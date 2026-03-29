@@ -1,0 +1,137 @@
+{
+  "slug": "lemon-drizzle-cake",
+  "title": "Lemon Drizzle Cake",
+  "description": "A tender loaf cake with fresh lemon zest, a sharp syrup soak, and a crisp icing shell.",
+  "category": "Cake",
+  "tags": ["lemon", "cake", "loaf", "bake", "dessert"],
+  "searchTags": ["Dessert", "Cake", "Lemon", "Loaf", "Citrus"],
+  "baseYield": 8,
+  "yieldLabel": "slices",
+  "heroTitle": "Lemon Drizzle Cake",
+  "heroCopy": "A bright, buttery loaf cake finished with lemon syrup and a simple icing glaze. The method scales with the ingredients so you can bake a smaller or larger cake confidently.",
+  "ingredientsHeading": "For the cake, syrup, and icing",
+  "methodHeading": "Bake, soak, and glaze",
+  "notesHeading": "Kitchen notes",
+  "ingredients": [
+    {
+      "id": "butter",
+      "name": "unsalted butter, softened",
+      "quantity": 225,
+      "unit": "g",
+      "format": { "decimals": 0 }
+    },
+    {
+      "id": "caster-sugar",
+      "name": "caster sugar",
+      "quantity": 225,
+      "unit": "g",
+      "format": { "decimals": 0 }
+    },
+    {
+      "id": "drizzle-sugar",
+      "name": "caster sugar for the syrup",
+      "quantity": 85,
+      "unit": "g",
+      "format": { "decimals": 0 }
+    },
+    {
+      "id": "eggs",
+      "name": "large eggs",
+      "quantity": 4,
+      "unit": "count",
+      "format": { "countable": true, "plural": "large eggs", "singular": "large egg" }
+    },
+    {
+      "id": "flour",
+      "name": "self-raising flour",
+      "quantity": 225,
+      "unit": "g",
+      "format": { "decimals": 0 }
+    },
+    {
+      "id": "baking-powder",
+      "name": "baking powder",
+      "quantity": 1,
+      "unit": "tsp",
+      "format": { "decimals": 2, "fractions": true }
+    },
+    {
+      "id": "milk",
+      "name": "whole milk",
+      "quantity": 3,
+      "unit": "tbsp",
+      "format": { "decimals": 2, "fractions": true }
+    },
+    {
+      "id": "lemon-zest",
+      "name": "zest of unwaxed lemons",
+      "quantity": 2,
+      "unit": "count",
+      "format": { "countable": true, "plural": "lemons", "singular": "lemon" }
+    },
+    {
+      "id": "lemon-juice",
+      "name": "fresh lemon juice",
+      "quantity": 5,
+      "unit": "tbsp",
+      "format": { "decimals": 2, "fractions": true }
+    },
+    {
+      "id": "icing-sugar",
+      "name": "icing sugar",
+      "quantity": 85,
+      "unit": "g",
+      "format": { "decimals": 0 }
+    }
+  ],
+  "steps": [
+    [
+      {
+        "type": "text",
+        "value": "Heat the oven to 180°C / 160°C fan. Line a loaf tin with baking paper and beat together "
+      },
+      { "type": "ingredient", "id": "butter" },
+      { "type": "text", "value": " and " },
+      { "type": "ingredient", "id": "caster-sugar" },
+      { "type": "text", "value": " until pale and fluffy." }
+    ],
+    [
+      { "type": "text", "value": "Beat in " },
+      { "type": "ingredient", "id": "eggs" },
+      { "type": "text", "value": " one at a time, then fold in " },
+      { "type": "ingredient", "id": "flour" },
+      { "type": "text", "value": ", " },
+      { "type": "ingredient", "id": "baking-powder" },
+      { "type": "text", "value": ", the zest of " },
+      { "type": "ingredient", "id": "lemon-zest" },
+      { "type": "text", "value": ", and " },
+      { "type": "ingredient", "id": "milk" },
+      { "type": "text", "value": "." }
+    ],
+    [
+      {
+        "type": "text",
+        "value": "Spoon the batter into the loaf tin and bake for 45 to 55 minutes, until a skewer comes out clean."
+      }
+    ],
+    [
+      { "type": "text", "value": "Mix " },
+      { "type": "ingredient", "id": "lemon-juice", "quantity": 3, "displayMode": "amountOnly" },
+      { "type": "text", "value": " of fresh lemon juice with " },
+      { "type": "ingredient", "id": "drizzle-sugar" },
+      { "type": "text", "value": ". Prick the hot cake all over and spoon the lemon syrup across the surface while it is still in the tin." }
+    ],
+    [
+      { "type": "text", "value": "When the cake is cool, stir " },
+      { "type": "ingredient", "id": "icing-sugar" },
+      { "type": "text", "value": " with " },
+      { "type": "ingredient", "id": "lemon-juice", "quantity": 2, "displayMode": "amountOnly" },
+      { "type": "text", "value": " to make a thick glaze, then spread it over the top and leave it to set." }
+    ]
+  ],
+  "notes": [
+    "The base recipe makes one loaf, roughly 8 slices, and the displayed yield rounds to the nearest whole slice.",
+    "Whole eggs round to a sensible count as you scale, which keeps the cake batter practical for a home kitchen.",
+    "If you scale well above 2x, split the batter between tins rather than overfilling one loaf pan."
+  ]
+}

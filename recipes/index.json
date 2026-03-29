@@ -1,0 +1,22 @@
+[
+  {
+    "slug": "pastel-de-nata",
+    "title": "Pastel de Nata",
+    "description": "Portuguese custard tarts with crisp pastry, warm cinnamon custard, and caramelised tops.",
+    "category": "Pastry",
+    "tags": ["portuguese", "tart", "custard", "pastry", "dessert"],
+    "searchTags": ["Dessert", "Pastry", "Portuguese", "Custard", "Tart"],
+    "baseYield": 12,
+    "yieldLabel": "tarts"
+  },
+  {
+    "slug": "lemon-drizzle-cake",
+    "title": "Lemon Drizzle Cake",
+    "description": "A tender loaf cake with fresh lemon zest, a sharp syrup soak, and a crisp icing shell.",
+    "category": "Cake",
+    "tags": ["lemon", "cake", "loaf", "bake", "dessert"],
+    "searchTags": ["Dessert", "Cake", "Lemon", "Loaf", "Citrus"],
+    "baseYield": 8,
+    "yieldLabel": "slices"
+  }
+]

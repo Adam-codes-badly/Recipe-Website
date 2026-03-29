@@ -3,7 +3,7 @@
 Static recipe website for GitHub Pages with:
 
 - a searchable home page
-- one page per recipe
+- one shared recipe template page
 - ingredient quantities shown in both the ingredients list and the method
 - a scaling slider on every recipe page
 
@@ -12,22 +12,24 @@ Static recipe website for GitHub Pages with:
 The site currently has:
 
 - a home page at `index.html`
+- a shared recipe template at `recipe.html`
 - a shared stylesheet at `styles.css`
-- a shared recipe dataset in `data.js`
+- a recipe manifest at `recipes/index.json`
+- one JSON file per recipe in `recipes/`
 - home page search/rendering logic in `home.js`
 - shared recipe page rendering and scaling logic in `recipe-page.js`
-- two recipe pages in `recipes/`
+- recipe data files in `recipes/`
 
 Current recipes:
 
-- `recipes/pastel-de-nata.html`
-- `recipes/lemon-drizzle-cake.html`
+- `recipes/pastel-de-nata.json`
+- `recipes/lemon-drizzle-cake.json`
 
 ## How It Works
 
 ### Home page
 
-`index.html` loads `home.js`, which imports all recipes from `data.js` and renders them as cards.
+`index.html` loads `home.js`, which fetches `recipes/index.json` and renders recipe cards from the manifest.
 
 The search box filters recipes by:
 
@@ -40,15 +42,9 @@ The home page also renders clickable tag filters from each recipe's `searchTags`
 
 ### Recipe pages
 
-Each recipe page is a small HTML wrapper that sets a `data-recipe-slug` attribute on the `<body>`.
+There is now one shared recipe page at `recipe.html`.
 
-Example:
-
-```html
-<body data-recipe-slug="pastel-de-nata">
-```
-
-`recipe-page.js` reads that slug, finds the matching recipe in `data.js`, and renders:
+`recipe-page.js` reads the `slug` query parameter, fetches `recipes/<slug>.json`, and renders:
 
 - hero content
 - ingredient list
@@ -69,73 +65,85 @@ The renderer:
 
 This keeps the ingredient list and method aligned because both come from the same recipe data.
 
+## Why This Structure Is Better
+
+This is more sustainable than the earlier setup because:
+
+- recipe content is no longer stored in one large source file
+- each recipe lives in its own data file, so additions stay small and isolated
+- there is only one recipe page template instead of repeated near-identical HTML files
+- the home page only needs a small manifest rather than every full recipe payload
+
+For a static GitHub Pages site, this gives you a cleaner content model without introducing a build system.
+
 ## File Overview
 
 - `index.html`: searchable home page
-- `home.js`: renders and filters recipe cards
-- `data.js`: source of truth for all recipes
-- `recipe-page.js`: shared logic for rendering one recipe and applying scaling
+- `recipe.html`: shared recipe template page
+- `home.js`: fetches the recipe manifest, then renders and filters recipe cards
+- `recipe-page.js`: fetches one recipe JSON file, then renders scaling and method content
 - `styles.css`: shared styling for home and recipe pages
-- `recipes/*.html`: individual recipe page entrypoints
+- `recipes/index.json`: lightweight list used by the home page
+- `recipes/*.json`: one full recipe per file
 
 ## Adding A New Recipe
 
 Adding a new recipe requires two steps:
 
-1. Add the recipe data to `data.js`
-2. Add a matching HTML page in `recipes/`
+1. Add the recipe JSON file in `recipes/`
+2. Add the recipe summary to `recipes/index.json`
 
-### Step 1: Add the recipe object
+### Step 1: Add the recipe JSON file
 
-In `data.js`, add a new object to the exported `recipes` array.
+Create a new file such as `recipes/banana-bread.json`.
 
 Use this structure:
 
-```js
+```json
 {
-  slug: "your-recipe-slug",
-  title: "Your Recipe Title",
-  description: "Short description for the home page.",
-  category: "Cake",
-  tags: ["tag-one", "tag-two"],
-  searchTags: ["Dessert", "Cake", "Easy"],
-  baseYield: 8,
-  yieldLabel: "slices",
-  heroTitle: "Your Recipe Title",
-  heroCopy: "Intro text for the recipe page hero.",
-  ingredientsHeading: "For the cake",
-  methodHeading: "Bake and serve",
-  notesHeading: "Notes",
-  ingredients: [
+  "slug": "your-recipe-slug",
+  "title": "Your Recipe Title",
+  "description": "Short description for the home page.",
+  "category": "Cake",
+  "tags": ["tag-one", "tag-two"],
+  "searchTags": ["Dessert", "Cake", "Easy"],
+  "baseYield": 8,
+  "yieldLabel": "slices",
+  "heroTitle": "Your Recipe Title",
+  "heroCopy": "Intro text for the recipe page hero.",
+  "ingredientsHeading": "For the cake",
+  "methodHeading": "Bake and serve",
+  "notesHeading": "Notes",
+  "ingredients": [
     {
-      id: "flour",
-      name: "plain flour",
-      quantity: 200,
-      unit: "g",
-      format: { decimals: 0 }
+      "id": "flour",
+      "name": "plain flour",
+      "quantity": 200,
+      "unit": "g",
+      "format": { "decimals": 0 }
     },
     {
-      id: "eggs",
-      name: "large eggs",
-      quantity: 3,
-      unit: "count",
-      format: {
-        countable: true,
-        singular: "large egg",
-        plural: "large eggs"
+      "id": "eggs",
+      "name": "large eggs",
+      "quantity": 3,
+      "unit": "count",
+      "format": {
+        "countable": true,
+        "singular": "large egg",
+        "plural": "large eggs"
       }
     }
   ],
-  steps: [
+  "steps": [
     [
-      { type: "text", value: "Whisk together " },
-      { type: "ingredient", id: "flour" },
-      { type: "text", value: " and " },
-      { type: "ingredient", id: "eggs" },
-      { type: "text", value: "." }
+      { "type": "text", "value": "Whisk together " },
+      { "type": "ingredient", "id": "flour" },
+      { "type": "text", "value": " and " },
+      { "type": "ingredient", "id": "eggs" },
+      { "type": "text", "value": "." }
     ]
   ],
-  notes: [
+  "notes": [
     "Optional note."
   ]
 }
@@ -215,52 +223,32 @@ Supported display modes currently used:
 
 If `displayMode` is omitted, it defaults to `full`.
 
-## Step 2: Add the HTML page
+### Step 2: Add the recipe to the manifest
 
-Create a new file in `recipes/` named after the slug.
+Add a summary entry to `recipes/index.json` using the same:
 
-Example:
+- `slug`
+- `title`
+- `description`
+- `category`
+- `tags`
+- `searchTags`
+- `baseYield`
+- `yieldLabel`
 
-- `recipes/banana-bread.html`
-
-Use the same structure as the existing recipe pages and set the slug on `<body>`.
-
-Example:
-
-```html
-<!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Favourite Recipes</title>
-    <meta name="description" content="Recipe page" />
-    <link rel="stylesheet" href="../styles.css" />
-  </head>
-  <body data-recipe-slug="banana-bread">
-    ...
-    <script type="module" src="../recipe-page.js"></script>
-  </body>
-</html>
-```
-
-The easiest approach is to copy one of the existing files in `recipes/` and change only:
-
-- the filename
-- the `data-recipe-slug`
-
-Everything else can stay the same.
+The home page uses this file to build the recipe list and filters, so the summary should stay lightweight.
 
 ## Recommended Workflow For Future Recipes
 
-1. Duplicate an existing recipe object in `data.js`
+1. Copy an existing recipe JSON file in `recipes/`
 2. Update the text fields, ingredients, steps, and notes
-3. Create a matching page in `recipes/`
+3. Add a lightweight summary entry to `recipes/index.json`
 4. Add sensible `tags` and `searchTags` so the recipe appears in the right homepage filters
-5. Check that the `slug` matches the page filename and the `data-recipe-slug`
-6. Run the site locally and test the slider at a few values like `0.5x`, `1x`, and `2x`
-7. Check that awkward ingredients like eggs still read sensibly
-8. Check that any split quantities in the method are correct
+5. Check that the `slug` matches the recipe JSON filename
+6. Open `recipe.html?slug=your-recipe-slug` locally
+7. Test the slider at a few values like `0.5x`, `1x`, and `2x`
+8. Check that awkward ingredients like eggs still read sensibly
+9. Check that any split quantities in the method are correct
 
 ## Running Locally
 
@@ -285,6 +273,7 @@ http://127.0.0.1:8000/
 - Use step-level `quantity` overrides for split-use ingredients
 - Keep descriptions and tags useful so search works well
 - Reuse existing `searchTags` before inventing new ones unless a new filter is genuinely useful
+- Keep `recipes/index.json` small by storing only summary data there
 
 ## Current Limitation
 
