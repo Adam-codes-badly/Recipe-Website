@@ -107,8 +107,12 @@ function renderStepItem(step, scaledIngredients, scale) {
         ? {
             ...ingredient,
             scaledQuantity: getScaledPartQuantity(ingredient, part.quantity, scale),
+            displayName: part.displayName ?? ingredient.displayName,
           }
-        : ingredient,
+        : {
+            ...ingredient,
+            displayName: part.displayName ?? ingredient.displayName,
+          },
       part.displayMode ?? "full",
     );
     item.append(amount);
@@ -136,11 +140,25 @@ function applyScalingRules(ingredient, rawQuantity) {
 }
 
 function formatIngredient(ingredient, mode = "full") {
+  const labelOverride = ingredient.displayName?.trim();
+
+  if (hasFreeTextUnit(ingredient.unit)) {
+    if (mode === "amountOnly") {
+      return ingredient.unit;
+    }
+
+    return `${labelOverride ?? ingredient.name} ${ingredient.unit}`.trim();
+  }
+
   const amount = formatQuantity(ingredient.scaledQuantity, ingredient);
 
   if (ingredient.unit === "count") {
     if (mode === "amountOnly") {
       return amount;
+    }
+
+    if (labelOverride) {
+      return `${amount} ${labelOverride}`;
     }
 
     const label =
@@ -155,7 +173,7 @@ function formatIngredient(ingredient, mode = "full") {
     return amount;
   }
 
-  return `${amount} ${ingredient.name}`;
+  return `${amount} ${labelOverride ?? ingredient.name}`;
 }
 
 function formatQuantity(quantity, ingredient) {
@@ -164,6 +182,10 @@ function formatQuantity(quantity, ingredient) {
   }
 
   return `${formatNumber(quantity, ingredient.format ?? {})}${ingredient.unit}`;
+}
+
+function hasFreeTextUnit(unit) {
+  return typeof unit === "string" && /\s/.test(unit.trim()) && unit !== "count";
 }
 
 function formatNumber(quantity, format) {

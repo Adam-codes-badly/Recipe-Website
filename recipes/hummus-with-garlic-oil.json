@@ -1,6 +1,6 @@
 {
   "slug": "hummus-with-garlic-oil",
-  "title": "Hummus with garlic oil",
+  "title": "Hummus with Garlic Oil",
   "description": "Creamy hummus made from soaked dried chickpeas, tahini and lemon, finished with a warm garlic-infused olive oil. Make from dried chickpeas for best texture and flavour.",
   "category": "Dips & Spreads",
   "tags": [
@@ -15,13 +15,13 @@
     "make-ahead"
   ],
   "searchTags": [
-    "hummus recipe",
-    "homemade hummus",
-    "garlic oil",
-    "soaked chickpeas",
-    "tahini dip",
-    "vegan dip",
-    "mezze"
+    "Hummus",
+    "Garlic Oil",
+    "Chickpeas",
+    "Tahini",
+    "Dip",
+    "Vegan",
+    "Mezze"
   ],
   "media": {
     "alt": "Bowl of hummus drizzled with garlic oil and whole chickpeas",
@@ -36,7 +36,7 @@
     }
   },
   "baseYield": 8,
-  "yieldLabel": "serves",
+  "yieldLabel": "servings",
   "heroTitle": "Classic hummus, made from dried chickpeas",
   "heroCopy": "Soak and cook dried chickpeas, blend with tahini and lemon, then finish with a fragrant garlic oil — rich, smooth and made-from-scratch.",
   "ingredientsHeading": "Ingredients",
@@ -132,7 +132,7 @@
     [
       {
         "type": "text",
-        "value": "Put 500 g "
+        "value": "Put "
       },
       {
         "type": "ingredient",
@@ -154,33 +154,19 @@
       },
       {
         "type": "text",
-        "value": ", then place them in a large saucepan. Cover with fresh cold water and bring to the b"
-      },
-      {
-        "type": "ingredient",
-        "id": "olive-oil"
-      },
-      {
-        "type": "text",
-        "value": ". B"
-      },
-      {
-        "type": "ingredient",
-        "id": "olive-oil"
-      },
-      {
-        "type": "text",
-        "value": " for 10 minutes, then reduce to a steady simmer."
+        "value": ", then place them in a large saucepan. Cover with fresh cold water and bring to the boil. Boil for 10 minutes, then reduce to a steady simmer."
       }
     ],
     [
       {
         "type": "text",
-        "value": "Carefully add 1/2 tsp "
+        "value": "Carefully add "
       },
       {
         "type": "ingredient",
-        "id": "bicarbonate-of-soda"
+        "id": "bicarbonate-of-soda",
+        "quantity": 0.5,
+        "displayMode": "amountOnly"
       },
       {
         "type": "text",
@@ -218,15 +204,19 @@
       },
       {
         "type": "ingredient",
-        "id": "dried-chickpeas"
+        "id": "dried-chickpeas",
+        "quantity": 1000,
+        "displayName": "cooked chickpeas"
       },
       {
         "type": "text",
-        "value": " well. You should have approximately 1 kg cooked, drained "
+        "value": " well. You should have approximately "
       },
       {
         "type": "ingredient",
-        "id": "dried-chickpeas"
+        "id": "dried-chickpeas",
+        "quantity": 1000,
+        "displayName": "cooked, drained chickpeas"
       },
       {
         "type": "text",
@@ -234,7 +224,9 @@
       },
       {
         "type": "ingredient",
-        "id": "dried-chickpeas"
+        "id": "dried-chickpeas",
+        "quantity": 1000,
+        "displayName": "cooked chickpeas"
       },
       {
         "type": "text",
@@ -244,27 +236,21 @@
     [
       {
         "type": "text",
-        "value": "To make the garlic "
+        "value": "To make the garlic oil, put "
       },
       {
         "type": "ingredient",
-        "id": "olive-oil"
+        "id": "garlic-cloves-peeled",
+        "quantity": 6
       },
       {
         "type": "text",
-        "value": ", put 6 "
+        "value": " in a small saucepan and cover with "
       },
       {
         "type": "ingredient",
-        "id": "garlic-cloves-peeled"
-      },
-      {
-        "type": "text",
-        "value": " garlic cloves in a small saucepan and cover with 100 ml "
-      },
-      {
-        "type": "ingredient",
-        "id": "olive-oil"
+        "id": "olive-oil",
+        "quantity": 100
       },
       {
         "type": "text",
@@ -272,7 +258,8 @@
       },
       {
         "type": "ingredient",
-        "id": "olive-oil"
+        "id": "olive-oil",
+        "displayName": "garlic oil"
       },
       {
         "type": "text",
@@ -280,7 +267,8 @@
       },
       {
         "type": "ingredient",
-        "id": "olive-oil"
+        "id": "olive-oil",
+        "displayName": "garlic oil"
       },
       {
         "type": "text",
@@ -294,31 +282,39 @@
       },
       {
         "type": "ingredient",
-        "id": "dried-chickpeas"
+        "id": "dried-chickpeas",
+        "quantity": 1000,
+        "displayName": "chickpeas"
       },
       {
         "type": "text",
-        "value": ", 4 of the softened garlic cloves, 2 tbsp "
+        "value": ", 4 of the softened garlic cloves, "
       },
       {
         "type": "ingredient",
-        "id": "ground-cumin"
+        "id": "ground-cumin",
+        "quantity": 2,
+        "displayMode": "amountOnly"
       },
       {
         "type": "text",
-        "value": ", 1 tbsp "
+        "value": ", "
       },
       {
         "type": "ingredient",
-        "id": "salt"
+        "id": "salt",
+        "quantity": 1,
+        "displayMode": "amountOnly"
       },
       {
         "type": "text",
-        "value": " and 3 tbsp "
+        "value": " and "
       },
       {
         "type": "ingredient",
-        "id": "lemon-juice"
+        "id": "lemon-juice",
+        "quantity": 3,
+        "displayMode": "amountOnly"
       },
       {
         "type": "text",
@@ -328,15 +324,25 @@
     [
       {
         "type": "text",
-        "value": "With the processor running, add 160 g "
+        "value": "With the processor running, add "
       },
       {
         "type": "ingredient",
-        "id": "tahini"
+        "id": "tahini",
+        "quantity": 160
       },
       {
         "type": "text",
-        "value": " — the mixture will thicken — and immediately add the 150 ml iced water a little at a time until you reach the desired consistency. Blend to your preferred smoothness."
+        "value": " — the mixture will thicken — and immediately add "
+      },
+      {
+        "type": "ingredient",
+        "id": "iced-water-water-4-ice-cubes",
+        "quantity": 150
+      },
+      {
+        "type": "text",
+        "value": " a little at a time until you reach the desired consistency. Blend to your preferred smoothness."
       }
     ],
     [
@@ -346,7 +352,8 @@
       },
       {
         "type": "ingredient",
-        "id": "olive-oil"
+        "id": "olive-oil",
+        "displayName": "garlic oil"
       },
       {
         "type": "text",

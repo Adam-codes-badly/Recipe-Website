@@ -27,6 +27,8 @@ Current recipes:
 
 - `recipes/pastel-de-nata.json`
 - `recipes/lemon-drizzle-cake.json`
+- `recipes/chilli-broccoli-salad.json`
+- `recipes/hummus-with-garlic-oil.json`
 
 ## How It Works
 

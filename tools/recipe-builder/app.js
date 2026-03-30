@@ -2,6 +2,18 @@ const STORAGE_KEY = "recipe-builder-openai-key";
 const MODEL_KEY = "recipe-builder-openai-model";
 const DEFAULT_MODEL = "gpt-5-mini";
 const PHOTO_PLACEHOLDER = "./assets/placeholders/recipe-photo.svg";
+const GENERIC_ALIAS_WORDS = new Set([
+  "oil",
+  "sugar",
+  "salt",
+  "water",
+  "milk",
+  "flour",
+  "juice",
+  "dressing",
+  "sauce",
+  "powder",
+]);
 
 const appState = {
   mode: "plain",
@@ -307,6 +319,8 @@ function buildPrompt(mode) {
     "Leave fallbackPhoto and photoCredit fields empty unless the source explicitly provides a usable stock image.",
     "Empty photo fields should mean the site uses a shared placeholder image until a real photo is added.",
     "Method steps should be plain text steps. Do not tokenise them.",
+    "Do not repeat ingredient quantities inside method steps when the ingredient itself is named, because the site inserts scaled ingredient amounts automatically.",
+    "If an ingredient changes state later in the recipe, annotate the step with [[source ingredient -> display text]]. Example: [[dried chickpeas -> cooked chickpeas]].",
     `Source mode: ${mode}.`,
   ].join(" ");
 }
@@ -851,8 +865,8 @@ function compileDraft(draft) {
 }
 
 function tokenizeStep(stepText, ingredients) {
-  let remaining = stepText;
   const parts = [];
+  const annotatedSegments = splitAnnotatedStep(stepText);
   const ingredientMatchers = ingredients
     .map((ingredient) => ({
       ingredient,
@@ -860,38 +874,70 @@ function tokenizeStep(stepText, ingredients) {
     }))
     .sort((left, right) => right.ingredient.name.length - left.ingredient.name.length);
 
-  while (remaining) {
-    const match = findFirstIngredientMatch(remaining, ingredientMatchers);
+  annotatedSegments.forEach((segment) => {
+    if (segment.type === "annotation") {
+      const matchedIngredient = matchAnnotatedIngredient(segment.source, ingredientMatchers);
+      if (matchedIngredient) {
+        parts.push({
+          type: "ingredient",
+          id: matchedIngredient.id,
+          displayName: segment.display,
+        });
+        return;
+      }
 
-    if (!match) {
-      parts.push({ type: "text", value: remaining });
-      break;
+      parts.push({ type: "text", value: segment.raw });
+      return;
     }
 
-    if (match.index > 0) {
-      parts.push({ type: "text", value: remaining.slice(0, match.index) });
+    let remaining = segment.value;
+    while (remaining) {
+      const match = findFirstIngredientMatch(remaining, ingredientMatchers);
+
+      if (!match) {
+        parts.push({ type: "text", value: remaining });
+        break;
+      }
+
+      if (match.index > 0) {
+        parts.push({ type: "text", value: remaining.slice(0, match.index) });
+      }
+
+      parts.push({ type: "ingredient", id: match.ingredient.id });
+      remaining = remaining.slice(match.index + match.length);
+    }
+  });
+
+  const mergedParts = parts.reduce((accumulator, part) => {
+    const previous = accumulator[accumulator.length - 1];
+    if (part.type === "text" && previous?.type === "text") {
+      previous.value += part.value;
+      return accumulator;
     }
 
-    parts.push({ type: "ingredient", id: match.ingredient.id });
-    remaining = remaining.slice(match.index + match.length);
-  }
+    accumulator.push(part);
+    return accumulator;
+  }, []);
 
-  return parts.length ? parts : [{ type: "text", value: stepText }];
+  return mergedParts.length ? mergedParts : [{ type: "text", value: stepText }];
 }
 
 function findFirstIngredientMatch(text, ingredientMatchers) {
-  const lower = text.toLowerCase();
   let best = null;
 
   ingredientMatchers.forEach(({ ingredient, aliases }) => {
     aliases.forEach((alias) => {
-      const index = lower.indexOf(alias);
-      if (index === -1) {
+      const match = findAliasMatch(text, alias);
+      if (!match) {
         return;
       }
 
-      if (!best || index < best.index) {
-        best = { ingredient, index, length: alias.length };
+      if (
+        !best ||
+        match.index < best.index ||
+        (match.index === best.index && match.length > best.length)
+      ) {
+        best = { ingredient, index: match.index, length: match.length };
       }
     });
   });
@@ -913,10 +959,88 @@ function buildIngredientAliases(name) {
 
   const words = shortName.split(" ");
   if (words.length > 1) {
-    aliases.add(words[words.length - 1]);
+    const tail = words[words.length - 1];
+    if (tail.length >= 4 && !GENERIC_ALIAS_WORDS.has(tail)) {
+      aliases.add(tail);
+    }
   }
 
   return [...aliases].filter(Boolean);
+}
+
+function splitAnnotatedStep(stepText) {
+  const pattern = /\[\[([\s\S]+?)\]\]/g;
+  const segments = [];
+  let cursor = 0;
+  let match = pattern.exec(stepText);
+
+  while (match) {
+    if (match.index > cursor) {
+      segments.push({ type: "text", value: stepText.slice(cursor, match.index) });
+    }
+
+    const annotation = parseStepAnnotation(match[1]);
+    segments.push(
+      annotation
+        ? {
+            type: "annotation",
+            source: annotation.source,
+            display: annotation.display,
+            raw: match[0],
+          }
+        : { type: "text", value: match[0] },
+    );
+
+    cursor = match.index + match[0].length;
+    match = pattern.exec(stepText);
+  }
+
+  if (cursor < stepText.length) {
+    segments.push({ type: "text", value: stepText.slice(cursor) });
+  }
+
+  return segments.length ? segments : [{ type: "text", value: stepText }];
+}
+
+function parseStepAnnotation(input) {
+  const parts = input.split(/\s*->\s*/);
+  if (parts.length !== 2) {
+    return null;
+  }
+
+  const source = parts[0].trim();
+  const display = parts[1].trim();
+  if (!source || !display) {
+    return null;
+  }
+
+  return { source, display };
+}
+
+function matchAnnotatedIngredient(source, ingredientMatchers) {
+  const normalizedSource = source.trim().toLowerCase();
+  const matcher = ingredientMatchers.find(({ ingredient, aliases }) =>
+    ingredient.name.toLowerCase() === normalizedSource || aliases.includes(normalizedSource),
+  );
+
+  return matcher?.ingredient ?? null;
+}
+
+function findAliasMatch(text, alias) {
+  const pattern = new RegExp(`(^|[^a-z0-9])(${escapeRegExp(alias)})(?=[^a-z0-9]|$)`, "i");
+  const match = pattern.exec(text);
+  if (!match) {
+    return null;
+  }
+
+  return {
+    index: match.index + match[1].length,
+    length: match[2].length,
+  };
+}
+
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
 function createEmptyDraft() {
