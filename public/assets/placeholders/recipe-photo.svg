@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 800" role="img" aria-labelledby="title desc">
+  <title id="title">Recipe placeholder</title>
+  <desc id="desc">Abstract illustration used when a recipe photo is not available.</desc>
+  <defs>
+    <linearGradient id="bg" x1="0%" x2="100%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#fff7e8" />
+      <stop offset="100%" stop-color="#edbf7c" />
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="800" fill="url(#bg)" />
+  <circle cx="210" cy="160" r="110" fill="#e0a145" opacity="0.32" />
+  <circle cx="1030" cy="690" r="160" fill="#b24a2a" opacity="0.18" />
+  <rect x="205" y="175" width="790" height="450" rx="42" fill="#fff8ef" stroke="#b9854a" stroke-opacity="0.28" stroke-width="8" />
+  <rect x="260" y="240" width="680" height="310" rx="155" fill="#e9bb61" />
+  <circle cx="600" cy="395" r="132" fill="#f6d998" />
+  <circle cx="600" cy="395" r="92" fill="#c67a37" opacity="0.82" />
+  <g fill="#8f3418" opacity="0.78">
+    <circle cx="555" cy="355" r="10" />
+    <circle cx="640" cy="345" r="9" />
+    <circle cx="672" cy="392" r="11" />
+    <circle cx="590" cy="440" r="12" />
+    <circle cx="528" cy="408" r="8" />
+  </g>
+  <text x="600" y="685" fill="#6f4f3d" font-family="Georgia, serif" font-size="46" text-anchor="middle">
+    Add your own recipe photo or a stock fallback
+  </text>
+</svg>

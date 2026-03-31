@@ -6,7 +6,7 @@
     <title>Recipe Builder</title>
     <meta
       name="description"
-      content="Local authoring tool for generating recipe JSON and manifest entries for the Favourite Recipes site."
+      content="Local authoring tool for generating Astro recipe source files for the Favourite Recipes site."
     />
     <link rel="stylesheet" href="./styles.css" />
   </head>
@@ -17,14 +17,12 @@
         <h1>Recipe Builder</h1>
         <p class="builder-copy">
           Create recipe drafts from plain text, a recipe website URL, or a
-          recipe-book photo. Review the generated content, then export the JSON
-          files needed by the site.
+          recipe-book photo. Review the generated content, then export the Astro
+          content file needed by the site.
         </p>
         <p class="builder-meta">
-          Output files:
-          <code>recipes/&lt;slug&gt;.json</code>,
-          <code>recipes/index.json</code>,
-          and optionally photos in <code>assets/recipes/&lt;slug&gt;/</code>.
+          Output files: <code>src/content/recipes/&lt;slug&gt;.md</code>, plus
+          optional photos in <code>public/assets/recipes/&lt;slug&gt;/</code>.
         </p>
       </header>
 
@@ -154,9 +152,9 @@
             </div>
             <p class="helper-copy">
               If an ingredient changes state later in the recipe, use
-              <code>[[source ingredient -&gt; display text]]</code> inside the
-              step. Example:
-              <code>Blend the [[dried chickpeas -&gt; cooked chickpeas]] until smooth.</code>
+              <code>[[ingredient-id|display=text]]</code> style annotations in
+              the source output. The builder will generate these automatically
+              from readable draft text when it can.
             </p>
             <div id="steps-editor" class="collection-list"></div>
           </div>
@@ -173,29 +171,28 @@
         <section class="panel">
           <div class="panel-heading">
             <p class="panel-kicker">Export</p>
-            <h2>Generated files</h2>
+            <h2>Generated source</h2>
           </div>
 
           <div class="button-row">
-            <button id="copy-recipe-json" type="button">Copy recipe JSON</button>
-            <button id="copy-manifest-json" type="button">Copy manifest entry</button>
-            <button id="download-recipe-json" type="button" class="primary-button">Download recipe JSON</button>
+            <button id="copy-recipe-json" type="button">Copy recipe source</button>
+            <button id="copy-manifest-json" type="button">Copy card preview</button>
+            <button id="download-recipe-json" type="button" class="primary-button">Download recipe source</button>
           </div>
 
           <label>
-            <span>Recipe file output</span>
+            <span>Recipe source output</span>
             <textarea id="recipe-json-output" rows="18" readonly></textarea>
           </label>
 
           <label>
-            <span>Manifest entry output</span>
+            <span>Homepage card preview</span>
             <textarea id="manifest-json-output" rows="10" readonly></textarea>
           </label>
 
           <p class="helper-copy">
-            Review split-use ingredients carefully. The builder tokenises method
-            steps automatically, but complex recipes may still need a manual
-            touch-up before you commit the JSON.
+            Review the generated step annotations carefully. Complex recipes may
+            still need a manual touch-up before you commit the content file.
           </p>
         </section>
       </main>

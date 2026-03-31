@@ -9,3 +9,7 @@ tools/recipe-builder/local-config.json
 tools/recipe-builder/*.local.json
 
 *.log
+
+node_modules/
+dist/
+.astro/

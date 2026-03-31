@@ -1,0 +1,122 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { buildRecipeSummary, pickRecipePhoto } from "../lib/recipe-runtime";
+
+const entries = await getCollection("recipes");
+const recipes = entries
+  .map((entry) => buildRecipeSummary(entry.data, getContentSlug(entry.id)))
+  .sort((left, right) => left.title.localeCompare(right.title));
+const availableFilters = ["All", ...new Set(recipes.flatMap((recipe) => recipe.searchTags ?? []))];
+
+function getContentSlug(id) {
+  return id.replace(/\.[^.]+$/, "");
+}
+---
+
+<BaseLayout
+  title="Favourite Recipes"
+  description="Browse and search a growing collection of favourite recipes with dedicated recipe pages and live scaling."
+>
+  <div class="page-shell">
+    <header class="hero home-hero">
+      <p class="eyebrow">Favourite Recipes</p>
+      <h1>Find the recipe you want to cook next.</h1>
+      <p class="hero-copy">
+        A small static recipe collection built with Astro. Every recipe has live scaling
+        and quantities embedded directly into the method.
+      </p>
+      <p class="hero-helper">
+        Add or manage recipes with the local builder at
+        <a href="/tools/recipe-builder/">tools/recipe-builder</a>.
+      </p>
+    </header>
+
+    <main class="home-layout">
+      <section class="recipe-card search-card" aria-labelledby="search-title">
+        <div class="card-heading">
+          <p class="card-kicker">Search</p>
+          <h2 id="search-title">Browse recipes</h2>
+        </div>
+        <label class="search-label" for="recipe-search">
+          Search by title, flavour, or category.
+        </label>
+        <input
+          id="recipe-search"
+          class="search-input"
+          type="search"
+          placeholder="Try pastry, lemon, tart, cake..."
+          autocomplete="off"
+        />
+        <div class="filter-block">
+          <p class="filter-label">Filter by tag</p>
+          <div id="filter-bar" class="filter-bar" aria-label="Recipe filters">
+            {availableFilters.map((filter) => (
+              <button
+                type="button"
+                class:list={["filter-chip", { "is-active": filter === "All" }]}
+                data-filter={filter}
+              >
+                {filter}
+              </button>
+            ))}
+          </div>
+        </div>
+        <p id="search-summary" class="search-summary">
+          Showing {recipes.length} recipes for all tags
+        </p>
+      </section>
+
+      <section aria-labelledby="recipe-list-title">
+        <div class="card-heading list-heading">
+          <p class="card-kicker">Collection</p>
+          <h2 id="recipe-list-title">Recipe index</h2>
+        </div>
+        <div id="recipe-grid" class="recipe-grid">
+          {recipes.map((recipe) => {
+            const photo = pickRecipePhoto(recipe);
+            return (
+              <a
+                class="recipe-tile"
+                href={`/recipes/${recipe.slug}/`}
+                data-recipe-card
+                data-search={[
+                  recipe.title,
+                  recipe.description,
+                  recipe.category,
+                  recipe.tags.join(" "),
+                  recipe.searchTags.join(" "),
+                ].join(" ").toLowerCase()}
+                data-filters={recipe.searchTags.join("|")}
+              >
+                <div class="recipe-tile-media">
+                  <img
+                    class="recipe-tile-photo"
+                    src={photo.src}
+                    alt={photo.alt}
+                    loading="lazy"
+                  />
+                </div>
+                <div class="recipe-tile-body">
+                  <p class="recipe-tile-meta">
+                    {recipe.category} • Makes about {recipe.baseYield} {recipe.yieldLabel}
+                  </p>
+                  <h3>{recipe.title}</h3>
+                  <p class="recipe-tile-copy">{recipe.description}</p>
+                  <p class="recipe-tags">
+                    {(recipe.searchTags ?? recipe.tags).map((tag) => `#${tag}`).join(" ")}
+                  </p>
+                </div>
+              </a>
+            );
+          })}
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script type="module">
+    import { setupHomePage } from "../scripts/home-page";
+    setupHomePage();
+  </script>
+</BaseLayout>

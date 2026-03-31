@@ -1,7 +1,7 @@
 const STORAGE_KEY = "recipe-builder-openai-key";
 const MODEL_KEY = "recipe-builder-openai-model";
 const DEFAULT_MODEL = "gpt-5-mini";
-const PHOTO_PLACEHOLDER = "./assets/placeholders/recipe-photo.svg";
+const PHOTO_PLACEHOLDER = "/assets/placeholders/recipe-photo.svg";
 const GENERIC_ALIAS_WORDS = new Set([
   "oil",
   "sugar",
@@ -161,9 +161,9 @@ function bindTopLevelFields() {
 }
 
 function bindCopyButtons() {
-  refs.copyRecipe.addEventListener("click", () => copyText(refs.recipeOutput.value, "Recipe JSON copied."));
-  refs.copyManifest.addEventListener("click", () => copyText(refs.manifestOutput.value, "Manifest entry copied."));
-  refs.downloadRecipe.addEventListener("click", downloadRecipeJson);
+  refs.copyRecipe.addEventListener("click", () => copyText(refs.recipeOutput.value, "Recipe source copied."));
+  refs.copyManifest.addEventListener("click", () => copyText(refs.manifestOutput.value, "Card preview copied."));
+  refs.downloadRecipe.addEventListener("click", downloadRecipeSource);
 }
 
 function setMode(mode) {
@@ -308,7 +308,7 @@ async function generateWithOpenAI(mode, apiKey, model) {
 
 function buildPrompt(mode) {
   return [
-    "Turn the provided recipe source into a draft for a static recipe website.",
+    "Turn the provided recipe source into a draft for an Astro-based static recipe website.",
     "Return only JSON matching the schema.",
     "Use concise but useful title, description, hero copy, and headings.",
     "Prefer sensible UK kitchen units.",
@@ -319,8 +319,9 @@ function buildPrompt(mode) {
     "Leave fallbackPhoto and photoCredit fields empty unless the source explicitly provides a usable stock image.",
     "Empty photo fields should mean the site uses a shared placeholder image until a real photo is added.",
     "Method steps should be plain text steps. Do not tokenise them.",
-    "Do not repeat ingredient quantities inside method steps when the ingredient itself is named, because the site inserts scaled ingredient amounts automatically.",
-    "If an ingredient changes state later in the recipe, annotate the step with [[source ingredient -> display text]]. Example: [[dried chickpeas -> cooked chickpeas]].",
+    "Write steps so they still read naturally after ingredient references are converted into structured annotations.",
+    "Never leave a quantity hanging without the ingredient name nearby. Write '2 tbsp lemon juice', not just '2 tbsp'.",
+    "If an ingredient changes state later in the recipe, explicitly name that new state in the step text, for example 'cooked chickpeas' or 'garlic oil'.",
     `Source mode: ${mode}.`,
   ].join(" ");
 }
@@ -780,8 +781,8 @@ function updateIngredient(index, key, value) {
 
 function refreshOutputs() {
   const compiled = compileDraft(appState.draft);
-  refs.recipeOutput.value = JSON.stringify(compiled.recipe, null, 2);
-  refs.manifestOutput.value = JSON.stringify(compiled.manifestEntry, null, 2);
+  refs.recipeOutput.value = compiled.recipeSource;
+  refs.manifestOutput.value = JSON.stringify(compiled.cardPreview, null, 2);
 }
 
 function compileDraft(draft) {
@@ -844,27 +845,27 @@ function compileDraft(draft) {
     methodHeading: draft.methodHeading,
     notesHeading: draft.notesHeading,
     ingredients: normalizedIngredients,
-    steps: draft.stepsText.filter(Boolean).map((step) => tokenizeStep(step, normalizedIngredients)),
+    steps: draft.stepsText.filter(Boolean).map((step) => convertStepToSource(step, normalizedIngredients)),
     notes: draft.notes.filter(Boolean),
   };
 
   return {
-    recipe,
-    manifestEntry: {
+    recipeSource: buildRecipeSourceFile(recipe),
+    cardPreview: {
       slug: recipe.slug,
       title: recipe.title,
       description: recipe.description,
       category: recipe.category,
       tags: recipe.tags,
       searchTags: recipe.searchTags,
-      media: recipe.media,
       baseYield: recipe.baseYield,
       yieldLabel: recipe.yieldLabel,
+      route: `/recipes/${recipe.slug}/`,
     },
   };
 }
 
-function tokenizeStep(stepText, ingredients) {
+function convertStepToSource(stepText, ingredients) {
   const parts = [];
   const annotatedSegments = splitAnnotatedStep(stepText);
   const ingredientMatchers = ingredients
@@ -919,7 +920,74 @@ function tokenizeStep(stepText, ingredients) {
     return accumulator;
   }, []);
 
-  return mergedParts.length ? mergedParts : [{ type: "text", value: stepText }];
+  return serializeStepParts(mergedParts.length ? mergedParts : [{ type: "text", value: stepText }]);
+}
+
+function serializeStepParts(parts) {
+  const mutableParts = parts.map((part) => ({ ...part }));
+
+  mutableParts.forEach((part, index) => {
+    if (part.type !== "ingredient") {
+      return;
+    }
+
+    const previous = mutableParts[index - 1];
+    if (!previous || previous.type !== "text") {
+      return;
+    }
+
+    const extracted = extractTrailingQuantity(previous.value);
+    if (!extracted) {
+      return;
+    }
+
+    previous.value = extracted.remainingText;
+    part.quantity = extracted.quantity;
+    if (/^\s*of\b/i.test(mutableParts[index + 1]?.value ?? "")) {
+      part.displayMode = "amountOnly";
+    }
+  });
+
+  return mutableParts
+    .map((part) => {
+      if (part.type === "text") {
+        return part.value;
+      }
+
+      const attributes = [];
+      if (Object.prototype.hasOwnProperty.call(part, "quantity")) {
+        attributes.push(`quantity=${part.quantity}`);
+      }
+      if (part.displayName) {
+        attributes.push(`display=${part.displayName}`);
+      }
+      if (part.displayMode) {
+        attributes.push(`mode=${part.displayMode}`);
+      }
+
+      return `[[${part.id}${attributes.length ? `|${attributes.join("|")}` : ""}]]`;
+    })
+    .join("");
+}
+
+function extractTrailingQuantity(text) {
+  const match = text.match(/^(.*?)(\d+(?:\.\d+)?(?:\s+\d+\/\d+)?|\d+\/\d+)\s*([A-Za-z]+)\s*$/);
+  if (!match) {
+    return null;
+  }
+
+  const quantity = parseQuantity(match[2]);
+  const unit = normalizeUnit(match[3].toLowerCase(), "");
+  const remainingText = match[1];
+
+  if (!["g", "kg", "ml", "l", "tsp", "tbsp", "cup", "count"].includes(unit)) {
+    return null;
+  }
+
+  return {
+    quantity,
+    remainingText,
+  };
 }
 
 function findFirstIngredientMatch(text, ingredientMatchers) {
@@ -1041,6 +1109,81 @@ function findAliasMatch(text, alias) {
 
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function buildRecipeSourceFile(recipe) {
+  const source = {
+    title: recipe.title,
+    description: recipe.description,
+    category: recipe.category,
+    tags: recipe.tags,
+    searchTags: recipe.searchTags,
+    baseYield: recipe.baseYield,
+    yieldLabel: recipe.yieldLabel,
+    heroTitle: recipe.heroTitle,
+    heroCopy: recipe.heroCopy,
+    ingredientsHeading: recipe.ingredientsHeading,
+    methodHeading: recipe.methodHeading,
+    notesHeading: recipe.notesHeading,
+    photoAlt: recipe.media.alt,
+    primaryPhoto: recipe.media.primaryPhoto?.src ?? "",
+    thumbnailPhoto: recipe.media.thumbnailPhoto?.src ?? PHOTO_PLACEHOLDER,
+    fallbackPhoto: recipe.media.fallbackPhoto?.src ?? PHOTO_PLACEHOLDER,
+    photoCreditText: recipe.media.fallbackPhoto?.creditText ?? "",
+    photoCreditUrl: recipe.media.fallbackPhoto?.creditUrl ?? "",
+    ingredients: recipe.ingredients,
+    steps: recipe.steps,
+    notes: recipe.notes,
+  };
+
+  return `---\n${toYaml(source)}---\n`;
+}
+
+function toYaml(value, indent = 0) {
+  const pad = " ".repeat(indent);
+
+  if (Array.isArray(value)) {
+    return value
+      .map((item) => {
+        if (isScalar(item)) {
+          return `${pad}- ${formatScalar(item)}\n`;
+        }
+
+        const nested = toYaml(item, indent + 2);
+        return `${pad}- ${nested.startsWith(" ".repeat(indent + 2)) ? "\n" : ""}${nested}`;
+      })
+      .join("");
+  }
+
+  if (value && typeof value === "object") {
+    return Object.entries(value)
+      .map(([key, entryValue]) => {
+        if (isScalar(entryValue)) {
+          return `${pad}${key}: ${formatScalar(entryValue)}\n`;
+        }
+
+        return `${pad}${key}:\n${toYaml(entryValue, indent + 2)}`;
+      })
+      .join("");
+  }
+
+  return `${pad}${formatScalar(value)}\n`;
+}
+
+function isScalar(value) {
+  return value == null || ["string", "number", "boolean"].includes(typeof value);
+}
+
+function formatScalar(value) {
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+
+  if (value == null) {
+    return '""';
+  }
+
+  return JSON.stringify(String(value));
 }
 
 function createEmptyDraft() {
@@ -1168,15 +1311,15 @@ async function copyText(text, successMessage) {
   setStatus(successMessage);
 }
 
-function downloadRecipeJson() {
-  const blob = new Blob([refs.recipeOutput.value], { type: "application/json" });
+function downloadRecipeSource() {
+  const blob = new Blob([refs.recipeOutput.value], { type: "text/markdown" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = `${appState.draft.slug || "recipe"}.json`;
+  link.download = `${appState.draft.slug || "recipe"}.md`;
   link.click();
   URL.revokeObjectURL(url);
-  setStatus("Recipe JSON downloaded.");
+  setStatus("Recipe source downloaded.");
 }
 
 function setStatus(message) {

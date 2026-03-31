@@ -1,0 +1,153 @@
+---
+import { getCollection } from "astro:content";
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import {
+  buildRuntimeRecipe,
+  createScaledIngredientMap,
+  formatIngredient,
+  formatYield,
+  pickRecipeHeroPhoto,
+  renderStepPart,
+} from "../../lib/recipe-runtime";
+
+export async function getStaticPaths() {
+  const recipes = await getCollection("recipes");
+  return recipes.map((recipe) => ({
+    params: { slug: recipe.id.replace(/\.[^.]+$/, "") },
+  }));
+}
+
+const { slug } = Astro.params;
+const entries = await getCollection("recipes");
+const entry = entries.find((candidate) => candidate.id.replace(/\.[^.]+$/, "") === slug);
+
+if (!entry) {
+  return Astro.redirect("/");
+}
+
+const recipe = buildRuntimeRecipe(entry.data, entry.id.replace(/\.[^.]+$/, ""));
+const heroPhoto = pickRecipeHeroPhoto(recipe);
+const initialScale = 1;
+const scaledIngredients = createScaledIngredientMap(recipe, initialScale);
+---
+
+<BaseLayout
+  title={`Favourite Recipes | ${recipe.title}`}
+  description={recipe.description}
+>
+  <div class="page-shell">
+    <header class="hero recipe-hero">
+      <p class="eyebrow">Favourite Recipes</p>
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <a href="/">Home</a>
+        <span>/</span>
+        <span>{recipe.title}</span>
+      </nav>
+      <h1>{recipe.heroTitle}</h1>
+      <p class="hero-copy">{recipe.heroCopy}</p>
+    </header>
+
+    <section class="recipe-photo-shell">
+      <figure class="recipe-photo-card">
+        <img class="recipe-photo" src={heroPhoto.src} alt={heroPhoto.alt} />
+        <figcaption class="recipe-photo-credit">
+          {heroPhoto.creditUrl ? (
+            <a href={heroPhoto.creditUrl} target="_blank" rel="noreferrer">{heroPhoto.creditText}</a>
+          ) : (
+            heroPhoto.creditText
+          )}
+        </figcaption>
+      </figure>
+    </section>
+
+    <main class="recipe-layout">
+      <aside class="recipe-card controls-card" aria-labelledby="scale-title">
+        <div class="card-heading">
+          <p class="card-kicker">Recipe Scale</p>
+          <h2 id="scale-title">Adjust the batch</h2>
+        </div>
+
+        <div class="scale-display">
+          <span id="scale-value">1x</span>
+          <span id="yield-value">Makes about {formatYield(recipe, 1)} {recipe.yieldLabel}</span>
+        </div>
+
+        <label class="slider-label" for="scale-slider">
+          Move the slider to make a smaller or larger batch.
+        </label>
+        <input
+          id="scale-slider"
+          type="range"
+          min="0.5"
+          max="3"
+          step="0.25"
+          value="1"
+        />
+
+        <div class="slider-ticks" aria-hidden="true">
+          <span>0.5x</span>
+          <span>1x</span>
+          <span>2x</span>
+          <span>3x</span>
+        </div>
+
+        <p class="control-note">
+          Countable ingredients are rounded to sensible whole values so the instructions
+          still read like a real recipe.
+        </p>
+      </aside>
+
+      <article class="recipe-card recipe-content">
+        <section class="section-block" aria-labelledby="ingredients-title">
+          <div class="card-heading">
+            <p class="card-kicker">Ingredients</p>
+            <h2 id="ingredients-title"><span>{recipe.ingredientsHeading}</span></h2>
+          </div>
+          <ul id="ingredients-list" class="ingredients-list">
+            {recipe.ingredients.map((ingredient) => (
+              <li>
+                <span class="ingredient-name">{ingredient.name}</span>
+                <span class="ingredient-amount">
+                  {formatIngredient(scaledIngredients.get(ingredient.id)!, "full")}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </section>
+
+        <section class="section-block" aria-labelledby="method-title">
+          <div class="card-heading">
+            <p class="card-kicker">Method</p>
+            <h2 id="method-title"><span>{recipe.methodHeading}</span></h2>
+          </div>
+          <ol id="method-list" class="method-list">
+            {recipe.steps.map((step) => (
+              <li>
+                {step.map((part, index) =>
+                  part.type === "text" ? part.value : (
+                    <span class="step-amount">{renderStepPart(step, index, scaledIngredients, initialScale)}</span>
+                  )
+                )}
+              </li>
+            ))}
+          </ol>
+        </section>
+
+        <section class="section-block notes-block" aria-labelledby="notes-title">
+          <div class="card-heading">
+            <p class="card-kicker">Notes</p>
+            <h2 id="notes-title"><span>{recipe.notesHeading}</span></h2>
+          </div>
+          <ul class="notes-list">
+            {recipe.notes.map((note) => <li>{note}</li>)}
+          </ul>
+        </section>
+      </article>
+    </main>
+  </div>
+
+  <script type="module" define:vars={{ recipe }}>
+    import { setupRecipePage } from "../../scripts/recipe-page";
+    setupRecipePage(recipe);
+  </script>
+</BaseLayout>
