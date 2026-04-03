@@ -1,19 +1,13 @@
 ---
 title: "Lemon Drizzle Cake"
 description: "A tender loaf cake with fresh lemon zest, a sharp syrup soak, and a crisp icing shell."
-category: "Cake"
+category: "Dessert"
 tags:
   - "lemon"
-  - "cake"
-  - "loaf"
-  - "bake"
   - "dessert"
 searchTags:
   - "Dessert"
-  - "Cake"
   - "Lemon"
-  - "Loaf"
-  - "Citrus"
 baseYield: 8
 yieldLabel: "slices"
 heroTitle: "Lemon Drizzle Cake"

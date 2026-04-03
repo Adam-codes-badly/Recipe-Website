@@ -2,6 +2,27 @@ const STORAGE_KEY = "recipe-builder-openai-key";
 const MODEL_KEY = "recipe-builder-openai-model";
 const DEFAULT_MODEL = "gpt-5-mini";
 const PHOTO_PLACEHOLDER = "/assets/placeholders/recipe-photo.svg";
+const EXISTING_CATEGORIES = ["Breakfast", "Dessert", "Dip", "Main", "Side", "Recipe"];
+const EXISTING_INGREDIENT_TAGS = ["broccoli", "butter", "chickpeas", "custard", "lemon"];
+const CATEGORY_SYNONYMS = {
+  cake: "Dessert",
+  dessert: "Dessert",
+  pastry: "Dessert",
+  pudding: "Dessert",
+  tart: "Dessert",
+  baking: "Dessert",
+  breakfast: "Breakfast",
+  brunch: "Breakfast",
+  dip: "Dip",
+  spread: "Dip",
+  mezze: "Dip",
+  main: "Main",
+  dinner: "Main",
+  lunch: "Main",
+  side: "Side",
+  salad: "Side",
+  starter: "Side",
+};
 const GENERIC_ALIAS_WORDS = new Set([
   "oil",
   "sugar",
@@ -312,7 +333,11 @@ function buildPrompt(mode) {
     "Return only JSON matching the schema.",
     "Use concise but useful title, description, hero copy, and headings.",
     "Prefer sensible UK kitchen units.",
-    "Infer tags and searchTags that help site browsing.",
+    `Prefer the existing category set: ${EXISTING_CATEGORIES.join(", ")}.`,
+    `Prefer reusing existing ingredient tags: ${EXISTING_INGREDIENT_TAGS.join(", ")}.`,
+    "Keep taxonomy tight: use one category and no more than one ingredient tag unless an existing tag clearly does not fit.",
+    "Only introduce a brand-new ingredient tag if none of the existing ingredient tags fit the recipe at all.",
+    "searchTags should mirror the chosen category plus ingredient tag in title case.",
     "Set photoAlt based on the dish.",
     "Leave primaryPhoto empty.",
     "Never invent or borrow another recipe's image.",
@@ -595,30 +620,104 @@ function inferCategory(title, description) {
   const haystack = `${title} ${description}`.toLowerCase();
 
   if (/cake|loaf|traybake/.test(haystack)) {
-    return "Cake";
+    return "Dessert";
   }
-  if (/tart|pastry|nata/.test(haystack)) {
-    return "Pastry";
+  if (/hummus|dip|spread/.test(haystack)) {
+    return "Dip";
   }
-  if (/pasta|soup|stew|curry/.test(haystack)) {
+  if (/croissant|bun|toast|granola|breakfast/.test(haystack)) {
+    return "Breakfast";
+  }
+  if (/salad|side|slaw/.test(haystack)) {
+    return "Side";
+  }
+  if (/tart|pastry|nata|pudding|custard|dessert/.test(haystack)) {
+    return "Dessert";
+  }
+  if (/pasta|soup|stew|curry|roast|main/.test(haystack)) {
     return "Main";
   }
   return "Recipe";
 }
 
 function inferTags(title, description, category) {
-  const tags = new Set([category.toLowerCase()]);
   const haystack = `${title} ${description}`.toLowerCase();
-  ["dessert", "lemon", "cake", "pastry", "tart", "portuguese", "citrus", "loaf"].forEach((tag) => {
-    if (haystack.includes(tag)) {
-      tags.add(tag);
-    }
-  });
-  return [...tags];
+  const tags = [];
+
+  const ingredientTags = [
+    "chickpeas",
+    "broccoli",
+    "lemon",
+    "custard",
+    "butter",
+    "chocolate",
+    "tomato",
+    "chicken",
+    "salmon",
+    "mushroom",
+    "potato",
+  ];
+
+  const mainIngredient = ingredientTags.find((tag) => haystack.includes(tag));
+  if (mainIngredient) {
+    tags.push(mainIngredient);
+  }
+
+  const categoryTag = category.toLowerCase();
+  if (categoryTag !== "recipe") {
+    tags.push(categoryTag);
+  }
+
+  return [...new Set(tags)];
 }
 
 function inferSearchTags(category, tags) {
   return [...new Set([category, ...tags.map((tag) => titleCase(tag))])];
+}
+
+function normalizeCategory(category, title = "", description = "") {
+  const raw = String(category || "").trim();
+  if (!raw) {
+    return inferCategory(title, description);
+  }
+
+  const canonical = CATEGORY_SYNONYMS[raw.toLowerCase()];
+  if (canonical) {
+    return canonical;
+  }
+
+  const titleCased = titleCase(raw);
+  if (EXISTING_CATEGORIES.includes(titleCased)) {
+    return titleCased;
+  }
+
+  return inferCategory(title, description);
+}
+
+function normalizeTags(tags, category, title = "", description = "") {
+  const haystack = `${title} ${description}`.toLowerCase();
+  const incoming = Array.isArray(tags) ? tags : [];
+  const normalized = [];
+
+  const existingIngredient = EXISTING_INGREDIENT_TAGS.find((tag) => haystack.includes(tag));
+  if (existingIngredient) {
+    normalized.push(existingIngredient);
+  } else {
+    const firstNovelIngredient = incoming
+      .map((tag) => String(tag || "").trim().toLowerCase())
+      .find((tag) => tag && tag !== category.toLowerCase() && !CATEGORY_SYNONYMS[tag]);
+
+    if (firstNovelIngredient) {
+      normalized.push(firstNovelIngredient);
+    }
+  }
+
+  const categoryTag = category.toLowerCase();
+  if (categoryTag !== "recipe") {
+    normalized.push(categoryTag);
+  }
+
+  return [...new Set(normalized)].slice(0, 2);
 }
 
 function syncFormFromDraft() {
@@ -1231,10 +1330,14 @@ function normalizeDraft(draft) {
     ...draft,
   };
 
-  normalized.tags = Array.isArray(normalized.tags) ? normalized.tags.filter(Boolean) : [];
-  normalized.searchTags = Array.isArray(normalized.searchTags)
-    ? normalized.searchTags.filter(Boolean)
-    : [];
+  normalized.category = normalizeCategory(normalized.category, normalized.title, normalized.description);
+  normalized.tags = normalizeTags(
+    normalized.tags,
+    normalized.category,
+    normalized.title,
+    normalized.description,
+  );
+  normalized.searchTags = inferSearchTags(normalized.category, normalized.tags);
   normalized.ingredients = Array.isArray(normalized.ingredients) && normalized.ingredients.length
     ? normalized.ingredients.map((ingredient) => createIngredientDraft(ingredient))
     : [createIngredientDraft()];

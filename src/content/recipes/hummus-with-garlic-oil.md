@@ -1,25 +1,13 @@
 ---
 title: "Hummus with Garlic Oil"
 description: "Creamy hummus made from soaked dried chickpeas, tahini and lemon, finished with a warm garlic-infused olive oil. Make from dried chickpeas for best texture and flavour."
-category: "Dips & Spreads"
+category: "Dip"
 tags:
-  - "hummus"
   - "chickpeas"
-  - "tahini"
-  - "garlic"
-  - "vegan"
-  - "vegetarian"
-  - "middle eastern"
   - "dip"
-  - "make-ahead"
 searchTags:
-  - "Hummus"
-  - "Garlic Oil"
-  - "Chickpeas"
-  - "Tahini"
   - "Dip"
-  - "Vegan"
-  - "Mezze"
+  - "Chickpeas"
 baseYield: 8
 yieldLabel: "servings"
 heroTitle: "Classic hummus, made from dried chickpeas"

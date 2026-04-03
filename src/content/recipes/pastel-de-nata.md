@@ -1,19 +1,13 @@
 ---
 title: "Pastel de Nata"
 description: "Portuguese custard tarts with crisp pastry, warm cinnamon custard, and caramelised tops."
-category: "Pastry"
+category: "Dessert"
 tags:
-  - "portuguese"
-  - "tart"
   - "custard"
-  - "pastry"
   - "dessert"
 searchTags:
   - "Dessert"
-  - "Pastry"
-  - "Portuguese"
   - "Custard"
-  - "Tart"
 baseYield: 12
 yieldLabel: "tarts"
 heroTitle: "Pastel de Nata"
