@@ -2,6 +2,8 @@ const STORAGE_KEY = "recipe-builder-openai-key";
 const MODEL_KEY = "recipe-builder-openai-model";
 const DEFAULT_MODEL = "gpt-5-mini";
 const PHOTO_PLACEHOLDER = "/assets/placeholders/recipe-photo.svg";
+const IMPORT_FALLBACK_ASPECT_RATIO = 16 / 6;
+const IMPORT_FALLBACK_MAX_WIDTH = 1600;
 const EXISTING_CATEGORIES = ["Breakfast", "Dessert", "Dip", "Main", "Side", "Recipe"];
 const EXISTING_INGREDIENT_TAGS = ["broccoli", "butter", "chickpeas", "custard", "lemon"];
 const CATEGORY_SYNONYMS = {
@@ -39,6 +41,8 @@ const GENERIC_ALIAS_WORDS = new Set([
 const appState = {
   mode: "plain",
   uploadedPhotoDataUrl: "",
+  uploadedFallbackPhotoDataUrl: "",
+  urlFallbackPhotoSrc: "",
   draft: createEmptyDraft(),
 };
 
@@ -109,7 +113,10 @@ function bootstrap() {
   refs.photoInput.addEventListener("change", async (event) => {
     const file = event.target.files?.[0];
     appState.uploadedPhotoDataUrl = file ? await fileToDataUrl(file) : "";
-    refs.photoPreview.src = appState.uploadedPhotoDataUrl;
+    appState.uploadedFallbackPhotoDataUrl = appState.uploadedPhotoDataUrl
+      ? await cropImageToAspect(appState.uploadedPhotoDataUrl, IMPORT_FALLBACK_ASPECT_RATIO)
+      : "";
+    refs.photoPreview.src = appState.uploadedFallbackPhotoDataUrl || appState.uploadedPhotoDataUrl;
   });
 
   refs.fetchUrl.addEventListener("click", fetchReadableUrl);
@@ -209,7 +216,12 @@ async function fetchReadableUrl() {
       throw new Error("URL fetch failed");
     }
     refs.urlText.value = await response.text();
-    setStatus("Readable page text fetched. Generate the draft when ready.");
+    appState.urlFallbackPhotoSrc = await buildUrlFallbackPhoto(url, refs.urlText.value);
+    setStatus(
+      appState.urlFallbackPhotoSrc
+        ? "Readable page text and fallback image fetched. Generate the draft when ready."
+        : "Readable page text fetched. Generate the draft when ready.",
+    );
   } catch (error) {
     setStatus("Direct URL fetch failed. Paste page text or HTML into the URL text box and try again.");
   }
@@ -220,7 +232,8 @@ async function generateDraft() {
 
   try {
     const draft = await buildDraftFromCurrentMode();
-    appState.draft = normalizeDraft(draft);
+    const enrichedDraft = await applyImportedFallbackMedia(draft);
+    appState.draft = normalizeDraft(enrichedDraft);
     refs.slug.dataset.manuallyEdited = "";
     syncFormFromDraft();
     setStatus("Draft generated. Review the fields below before exporting.");
@@ -341,8 +354,9 @@ function buildPrompt(mode) {
     "Set photoAlt based on the dish.",
     "Leave primaryPhoto empty.",
     "Never invent or borrow another recipe's image.",
-    "Leave fallbackPhoto and photoCredit fields empty unless the source explicitly provides a usable stock image.",
-    "Empty photo fields should mean the site uses a shared placeholder image until a real photo is added.",
+    "The app may populate fallbackPhoto from the source page image or uploaded photo after generation.",
+    "Only set fallbackPhoto or photo credit fields yourself when the source explicitly provides a better image and attribution.",
+    "If no source image is available, empty photo fields should mean the site uses a shared placeholder image until a real photo is added.",
     "Method steps should be plain text steps. Do not tokenise them.",
     "Write steps so they still read naturally after ingredient references are converted into structured annotations.",
     "Never leave a quantity hanging without the ingredient name nearby. Write '2 tbsp lemon juice', not just '2 tbsp'.",
@@ -673,6 +687,182 @@ function inferTags(title, description, category) {
 
 function inferSearchTags(category, tags) {
   return [...new Set([category, ...tags.map((tag) => titleCase(tag))])];
+}
+
+async function applyImportedFallbackMedia(draft) {
+  const nextDraft = { ...draft };
+
+  if (appState.mode === "photo" && appState.uploadedFallbackPhotoDataUrl) {
+    nextDraft.fallbackPhoto = appState.uploadedFallbackPhotoDataUrl;
+  }
+
+  if (appState.mode === "url") {
+    if (!appState.urlFallbackPhotoSrc && refs.recipeUrl.value.trim()) {
+      appState.urlFallbackPhotoSrc = await buildUrlFallbackPhoto(
+        refs.recipeUrl.value.trim(),
+        refs.urlText.value.trim(),
+      );
+    }
+
+    if (appState.urlFallbackPhotoSrc) {
+      nextDraft.fallbackPhoto = appState.urlFallbackPhotoSrc;
+      nextDraft.photoCreditUrl = nextDraft.photoCreditUrl || refs.recipeUrl.value.trim();
+    }
+  }
+
+  return nextDraft;
+}
+
+async function buildUrlFallbackPhoto(pageUrl, readableText = "") {
+  const candidates = [];
+
+  try {
+    const response = await fetch(pageUrl);
+    if (response.ok) {
+      const html = await response.text();
+      candidates.push(...extractImageUrlsFromHtml(html, pageUrl));
+    }
+  } catch (error) {
+    // Some recipe sites block direct browser fetches. In that case we fall back to readable text only.
+  }
+
+  candidates.push(...extractImageUrlsFromText(readableText, pageUrl));
+
+  const uniqueCandidates = [...new Set(candidates)].filter(Boolean);
+  for (const candidate of uniqueCandidates) {
+    const cropped = await tryCropRemoteImage(candidate);
+    if (cropped) {
+      return cropped;
+    }
+
+    if (looksLikeImageUrl(candidate)) {
+      return candidate;
+    }
+  }
+
+  return "";
+}
+
+function extractImageUrlsFromHtml(html, baseUrl) {
+  if (!html.trim()) {
+    return [];
+  }
+
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  const selectors = [
+    'meta[property="og:image"]',
+    'meta[name="twitter:image"]',
+    'meta[property="twitter:image"]',
+    'meta[itemprop="image"]',
+    'link[rel="image_src"]',
+    "img[src]",
+  ];
+
+  return selectors.flatMap((selector) =>
+    [...doc.querySelectorAll(selector)]
+      .map((node) => node.getAttribute("content") || node.getAttribute("href") || node.getAttribute("src") || "")
+      .map((value) => resolveUrl(value, baseUrl))
+      .filter(looksLikeImageUrl),
+  );
+}
+
+function extractImageUrlsFromText(text, baseUrl) {
+  const patterns = [
+    /!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/gi,
+    /(https?:\/\/[^\s"'<>]+\.(?:jpg|jpeg|png|webp|avif))/gi,
+  ];
+
+  return patterns.flatMap((pattern) => {
+    const urls = [];
+    let match = pattern.exec(text);
+    while (match) {
+      urls.push(resolveUrl(match[1], baseUrl));
+      match = pattern.exec(text);
+    }
+    return urls.filter(looksLikeImageUrl);
+  });
+}
+
+function resolveUrl(value, baseUrl) {
+  if (!value) {
+    return "";
+  }
+
+  try {
+    return new URL(value, baseUrl).href;
+  } catch (error) {
+    return "";
+  }
+}
+
+function looksLikeImageUrl(url) {
+  return /^https?:\/\//i.test(url) && /\.(jpg|jpeg|png|webp|avif)(?:[?#].*)?$/i.test(url);
+}
+
+async function tryCropRemoteImage(url) {
+  try {
+    const response = await fetch(url);
+    if (!response.ok) {
+      return "";
+    }
+
+    const blob = await response.blob();
+    const dataUrl = await fileToDataUrl(blob);
+    return cropImageToAspect(dataUrl, IMPORT_FALLBACK_ASPECT_RATIO);
+  } catch (error) {
+    return "";
+  }
+}
+
+async function cropImageToAspect(source, aspectRatio) {
+  const image = await loadImage(source);
+  const sourceAspectRatio = image.width / image.height;
+  let sourceX = 0;
+  let sourceY = 0;
+  let sourceWidth = image.width;
+  let sourceHeight = image.height;
+
+  if (sourceAspectRatio > aspectRatio) {
+    sourceWidth = image.height * aspectRatio;
+    sourceX = (image.width - sourceWidth) / 2;
+  } else {
+    sourceHeight = image.width / aspectRatio;
+    sourceY = (image.height - sourceHeight) / 2;
+  }
+
+  const targetWidth = Math.min(IMPORT_FALLBACK_MAX_WIDTH, Math.round(sourceWidth));
+  const targetHeight = Math.round(targetWidth / aspectRatio);
+  const canvas = document.createElement("canvas");
+  canvas.width = targetWidth;
+  canvas.height = targetHeight;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    return source;
+  }
+
+  context.drawImage(
+    image,
+    sourceX,
+    sourceY,
+    sourceWidth,
+    sourceHeight,
+    0,
+    0,
+    targetWidth,
+    targetHeight,
+  );
+
+  return canvas.toDataURL("image/jpeg", 0.9);
+}
+
+async function loadImage(src) {
+  return new Promise((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = reject;
+    image.src = src;
+  });
 }
 
 function normalizeCategory(category, title = "", description = "") {
@@ -1364,6 +1554,8 @@ function resetDraft() {
   refs.photoInput.value = "";
   refs.photoPreview.removeAttribute("src");
   appState.uploadedPhotoDataUrl = "";
+  appState.uploadedFallbackPhotoDataUrl = "";
+  appState.urlFallbackPhotoSrc = "";
   refs.slug.dataset.manuallyEdited = "";
   syncFormFromDraft();
   setStatus("Draft reset.");

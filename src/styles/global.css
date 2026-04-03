@@ -317,6 +317,10 @@ body::before {
   transition: transform 180ms ease, border-color 180ms ease;
 }
 
+.recipe-tile[hidden] {
+  display: none;
+}
+
 .recipe-tile:hover,
 .recipe-tile:focus-visible {
   transform: translateY(-3px);
