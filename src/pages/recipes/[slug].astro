@@ -2,6 +2,7 @@
 import { getCollection } from "astro:content";
 import BaseLayout from "../../layouts/BaseLayout.astro";
 import {
+  PHOTO_PLACEHOLDER,
   buildRuntimeRecipe,
   createScaledIngredientMap,
   formatIngredient,
@@ -29,6 +30,7 @@ const recipe = buildRuntimeRecipe(entry.data, entry.id.replace(/\.[^.]+$/, ""));
 const heroPhoto = pickRecipeHeroPhoto(recipe);
 const initialScale = 1;
 const scaledIngredients = createScaledIngredientMap(recipe, initialScale);
+const seenIngredientIds = new Set<string>();
 ---
 
 <BaseLayout
@@ -49,14 +51,22 @@ const scaledIngredients = createScaledIngredientMap(recipe, initialScale);
 
     <section class="recipe-photo-shell">
       <figure class="recipe-photo-card">
-        <img class="recipe-photo" src={heroPhoto.src} alt={heroPhoto.alt} />
-        <figcaption class="recipe-photo-credit">
-          {heroPhoto.creditUrl ? (
-            <a href={heroPhoto.creditUrl} target="_blank" rel="noreferrer">{heroPhoto.creditText}</a>
-          ) : (
-            heroPhoto.creditText
-          )}
-        </figcaption>
+        <img
+          class="recipe-photo"
+          src={heroPhoto.src}
+          alt={heroPhoto.alt}
+          data-fallback-src={PHOTO_PLACEHOLDER}
+          onerror={`if (this.src !== this.dataset.fallbackSrc) { this.src = this.dataset.fallbackSrc; } else { this.onerror = null; }`}
+        />
+        {heroPhoto.creditText && (
+          <figcaption class="recipe-photo-credit">
+            {heroPhoto.creditUrl ? (
+              <a href={heroPhoto.creditUrl} target="_blank" rel="noreferrer">{heroPhoto.creditText}</a>
+            ) : (
+              heroPhoto.creditText
+            )}
+          </figcaption>
+        )}
       </figure>
     </section>
 
@@ -123,11 +133,20 @@ const scaledIngredients = createScaledIngredientMap(recipe, initialScale);
           <ol id="method-list" class="method-list">
             {recipe.steps.map((step) => (
               <li>
-                {step.map((part, index) =>
-                  part.type === "text" ? part.value : (
-                    <span class="step-amount">{renderStepPart(step, index, scaledIngredients, initialScale)}</span>
-                  )
-                )}
+                {step.map((part, index) => {
+                  if (part.type === "text") {
+                    return part.value;
+                  }
+
+                  const isFirstUse = !seenIngredientIds.has(part.id);
+                  seenIngredientIds.add(part.id);
+
+                  return (
+                    <span class:list={["step-amount", { "step-amount-repeat": !isFirstUse }]}>
+                      {renderStepPart(step, index, scaledIngredients, initialScale)}
+                    </span>
+                  );
+                })}
               </li>
             ))}
           </ol>
@@ -145,9 +164,6 @@ const scaledIngredients = createScaledIngredientMap(recipe, initialScale);
       </article>
     </main>
   </div>
-
-  <script type="module" define:vars={{ recipe }}>
-    import { setupRecipePage } from "../../scripts/recipe-page";
-    setupRecipePage(recipe);
-  </script>
+  <script id="recipe-runtime-data" type="application/json" set:html={JSON.stringify(recipe)}></script>
+  <script type="module" src="/scripts/recipe-page.js"></script>
 </BaseLayout>

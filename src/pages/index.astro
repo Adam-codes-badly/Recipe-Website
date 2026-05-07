@@ -1,7 +1,7 @@
 ---
 import { getCollection } from "astro:content";
 import BaseLayout from "../layouts/BaseLayout.astro";
-import { buildRecipeSummary, pickRecipePhoto } from "../lib/recipe-runtime";
+import { PHOTO_PLACEHOLDER, buildRecipeSummary, pickRecipePhoto } from "../lib/recipe-runtime";
 
 const entries = await getCollection("recipes");
 const recipes = entries
@@ -95,6 +95,8 @@ function getContentSlug(id) {
                     src={photo.src}
                     alt={photo.alt}
                     loading="lazy"
+                    data-fallback-src={PHOTO_PLACEHOLDER}
+                    onerror={`if (this.src !== this.dataset.fallbackSrc) { this.src = this.dataset.fallbackSrc; } else { this.onerror = null; }`}
                   />
                 </div>
                 <div class="recipe-tile-body">
@@ -114,9 +116,5 @@ function getContentSlug(id) {
       </section>
     </main>
   </div>
-
-  <script type="module">
-    import { setupHomePage } from "../scripts/home-page";
-    setupHomePage();
-  </script>
+  <script type="module" src="/scripts/home-page.js"></script>
 </BaseLayout>

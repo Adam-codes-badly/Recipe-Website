@@ -1,9 +1,9 @@
-export function setupHomePage() {
-  const searchInput = document.querySelector<HTMLInputElement>("#recipe-search");
-  const searchSummary = document.querySelector<HTMLElement>("#search-summary");
-  const recipeCards = [...document.querySelectorAll<HTMLElement>("[data-recipe-card]")];
-  const filterButtons = [...document.querySelectorAll<HTMLButtonElement>("[data-filter]")];
-  const recipeGrid = document.querySelector<HTMLElement>("#recipe-grid");
+function setupHomePage() {
+  const searchInput = document.querySelector("#recipe-search");
+  const searchSummary = document.querySelector("#search-summary");
+  const recipeCards = [...document.querySelectorAll("[data-recipe-card]")];
+  const filterButtons = [...document.querySelectorAll("[data-filter]")];
+  const recipeGrid = document.querySelector("#recipe-grid");
 
   if (!searchInput || !searchSummary || !recipeGrid) {
     return;
@@ -27,7 +27,7 @@ export function setupHomePage() {
     });
   });
 
-  function renderResults(query: string) {
+  function renderResults(query) {
     let visibleCount = 0;
 
     recipeCards.forEach((card) => {
@@ -55,3 +55,5 @@ export function setupHomePage() {
     searchSummary.textContent = `Showing ${visibleCount} recipe${visibleCount === 1 ? "" : "s"} for ${filterSummary}`;
   }
 }
+
+setupHomePage();

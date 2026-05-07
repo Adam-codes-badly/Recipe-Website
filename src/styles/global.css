@@ -452,6 +452,11 @@ body::before {
   color: #8f3418;
 }
 
+.step-amount-repeat {
+  font-weight: inherit;
+  color: inherit;
+}
+
 .notes-list {
   display: grid;
   gap: 0.7rem;

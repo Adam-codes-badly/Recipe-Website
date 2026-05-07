@@ -68,7 +68,7 @@ const FRACTIONS = [
   { value: 0.75, label: "3/4" },
 ];
 
-const PHOTO_PLACEHOLDER = "/assets/placeholders/recipe-photo.svg";
+export const PHOTO_PLACEHOLDER = "/assets/placeholders/recipe-photo.svg";
 
 export function buildRuntimeRecipe(source: RecipeSource, slug: string): RuntimeRecipe {
   return {
