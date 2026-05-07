@@ -57,12 +57,13 @@
               and submit the current draft as a fresh pull request instead of
               copying files into the repo by hand.
             </p>
+            <p class="helper-copy">
+              This tool uses a GitHub personal access token stored locally in
+              your browser. Use the connect button to paste it once, then load
+              recipes from <code>main</code> and create pull requests.
+            </p>
 
             <div class="api-grid">
-              <label>
-                <span>GitHub OAuth client ID</span>
-                <input id="github-client-id" type="text" placeholder="Required for device flow auth" autocomplete="off" />
-              </label>
               <label>
                 <span>Repository owner</span>
                 <input id="github-owner" type="text" value="Adam-codes-badly" autocomplete="off" />
@@ -73,22 +74,13 @@
               </label>
               <label>
                 <span>Base branch</span>
-                <input id="github-base-branch" type="text" value="main" autocomplete="off" />
+                <input id="github-base-branch" type="text" value="main" autocomplete="off" readonly />
               </label>
             </div>
 
             <div class="button-row">
               <button id="github-connect" type="button">Connect GitHub</button>
-              <button id="github-open-device" type="button">Open verification page</button>
               <button id="github-logout" type="button">Sign out</button>
-            </div>
-
-            <div id="github-device-shell" class="device-shell is-hidden">
-              <p class="helper-copy">
-                Enter this code on GitHub to authorize the builder:
-              </p>
-              <p id="github-device-code" class="device-code">Not started</p>
-              <p id="github-device-meta" class="status-copy"></p>
             </div>
 
             <p id="github-auth-status" class="status-copy">
@@ -104,8 +96,10 @@
                 </select>
               </label>
               <label>
-                <span>Recipe slug to load</span>
-                <input id="github-load-slug" type="text" placeholder="e.g. hummus-with-garlic-oil" autocomplete="off" />
+                <span>Recipe to edit</span>
+                <select id="github-load-slug">
+                  <option value="">Choose a recipe from main</option>
+                </select>
               </label>
             </div>
 
@@ -113,10 +107,48 @@
               <button id="github-load-recipe" type="button">Load recipe from GitHub</button>
               <button id="github-submit-pr" type="button" class="primary-button">Create pull request</button>
             </div>
+            <p id="github-pr-help" class="helper-copy">
+              The builder creates a new branch from <code>main</code> in this repository,
+              commits the current draft there, and then opens a pull request back into <code>main</code>.
+            </p>
 
             <p id="github-load-status" class="status-copy"></p>
             <p id="github-submit-status" class="status-copy"></p>
             <p id="github-result" class="status-copy"></p>
+
+            <div class="collection-block">
+              <div class="collection-header">
+                <h3>Existing recipe</h3>
+              </div>
+              <p class="helper-copy">
+                Load a recipe from main to review the current source before you
+                propose edits.
+              </p>
+              <label>
+                <span>Current recipe source from main</span>
+                <textarea id="github-current-source" rows="14" readonly placeholder="Load a recipe to inspect its current source."></textarea>
+              </label>
+            </div>
+
+            <div class="collection-block">
+              <div class="collection-header">
+                <h3>Edit request</h3>
+              </div>
+              <p class="helper-copy">
+                Describe the change you want. The builder will update the loaded
+                recipe draft while keeping the site’s recipe structure and
+                formatting conventions.
+              </p>
+              <label>
+                <span>Requested changes</span>
+                <textarea id="github-edit-prompt" rows="5" placeholder="Example: make this serve 6, add roasted garlic to the ingredients, and update the method and hero copy to match."></textarea>
+              </label>
+              <div class="button-row">
+                <button id="github-apply-edit" type="button">Apply edit request</button>
+              </div>
+              <p id="github-edit-help" class="helper-copy"></p>
+              <p id="github-edit-status" class="status-copy"></p>
+            </div>
           </div>
 
           <div class="mode-tabs" role="tablist" aria-label="Import modes">
@@ -246,7 +278,7 @@
         <section class="panel">
           <div class="panel-heading">
             <p class="panel-kicker">Export</p>
-            <h2>Generated source</h2>
+            <h2>Preview and source</h2>
           </div>
 
           <div class="button-row">
@@ -255,15 +287,23 @@
             <button id="download-recipe-json" type="button" class="primary-button">Download recipe source</button>
           </div>
 
-          <label>
-            <span>Recipe source output</span>
-            <textarea id="recipe-json-output" rows="18" readonly></textarea>
-          </label>
+          <div id="recipe-page-preview" class="recipe-preview-shell" aria-live="polite"></div>
 
-          <label>
-            <span>Homepage card preview</span>
-            <textarea id="manifest-json-output" rows="10" readonly></textarea>
-          </label>
+          <details class="output-details">
+            <summary>Recipe source output</summary>
+            <label>
+              <span>Recipe source output</span>
+              <textarea id="recipe-json-output" rows="18" readonly></textarea>
+            </label>
+          </details>
+
+          <details class="output-details">
+            <summary>Homepage card preview</summary>
+            <label>
+              <span>Homepage card preview</span>
+              <textarea id="manifest-json-output" rows="10" readonly></textarea>
+            </label>
+          </details>
 
           <p class="helper-copy">
             Review the generated step annotations carefully. Complex recipes may
