@@ -47,6 +47,78 @@
             </label>
           </div>
 
+          <div class="github-block">
+            <div class="panel-heading github-heading">
+              <p class="panel-kicker">Review</p>
+              <h2>GitHub workflow</h2>
+            </div>
+            <p class="helper-copy">
+              Connect the builder to GitHub, load an existing recipe into the form,
+              and submit the current draft as a fresh pull request instead of
+              copying files into the repo by hand.
+            </p>
+
+            <div class="api-grid">
+              <label>
+                <span>GitHub OAuth client ID</span>
+                <input id="github-client-id" type="text" placeholder="Required for device flow auth" autocomplete="off" />
+              </label>
+              <label>
+                <span>Repository owner</span>
+                <input id="github-owner" type="text" value="Adam-codes-badly" autocomplete="off" />
+              </label>
+              <label>
+                <span>Repository name</span>
+                <input id="github-repo" type="text" value="Recipe-Website" autocomplete="off" />
+              </label>
+              <label>
+                <span>Base branch</span>
+                <input id="github-base-branch" type="text" value="main" autocomplete="off" />
+              </label>
+            </div>
+
+            <div class="button-row">
+              <button id="github-connect" type="button">Connect GitHub</button>
+              <button id="github-open-device" type="button">Open verification page</button>
+              <button id="github-logout" type="button">Sign out</button>
+            </div>
+
+            <div id="github-device-shell" class="device-shell is-hidden">
+              <p class="helper-copy">
+                Enter this code on GitHub to authorize the builder:
+              </p>
+              <p id="github-device-code" class="device-code">Not started</p>
+              <p id="github-device-meta" class="status-copy"></p>
+            </div>
+
+            <p id="github-auth-status" class="status-copy">
+              GitHub is not connected.
+            </p>
+
+            <div class="api-grid github-workflow-grid">
+              <label>
+                <span>Submission mode</span>
+                <select id="github-submission-mode">
+                  <option value="create">Create new recipe PR</option>
+                  <option value="edit">Edit existing recipe PR</option>
+                </select>
+              </label>
+              <label>
+                <span>Recipe slug to load</span>
+                <input id="github-load-slug" type="text" placeholder="e.g. hummus-with-garlic-oil" autocomplete="off" />
+              </label>
+            </div>
+
+            <div class="button-row">
+              <button id="github-load-recipe" type="button">Load recipe from GitHub</button>
+              <button id="github-submit-pr" type="button" class="primary-button">Create pull request</button>
+            </div>
+
+            <p id="github-load-status" class="status-copy"></p>
+            <p id="github-submit-status" class="status-copy"></p>
+            <p id="github-result" class="status-copy"></p>
+          </div>
+
           <div class="mode-tabs" role="tablist" aria-label="Import modes">
             <button class="mode-tab is-active" type="button" data-mode="plain">Plain text</button>
             <button class="mode-tab" type="button" data-mode="url">Recipe URL</button>

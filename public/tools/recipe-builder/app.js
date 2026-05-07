@@ -1,6 +1,18 @@
 const STORAGE_KEY = "recipe-builder-openai-key";
 const MODEL_KEY = "recipe-builder-openai-model";
+const GITHUB_CLIENT_ID_KEY = "recipe-builder-github-client-id";
+const GITHUB_TOKEN_KEY = "recipe-builder-github-token";
+const GITHUB_USER_KEY = "recipe-builder-github-user";
+const GITHUB_OWNER_KEY = "recipe-builder-github-owner";
+const GITHUB_REPO_KEY = "recipe-builder-github-repo";
+const GITHUB_BASE_BRANCH_KEY = "recipe-builder-github-base-branch";
 const DEFAULT_MODEL = "gpt-5-mini";
+const DEFAULT_GITHUB_OWNER = "Adam-codes-badly";
+const DEFAULT_GITHUB_REPO = "Recipe-Website";
+const DEFAULT_GITHUB_BASE_BRANCH = "main";
+const GITHUB_OAUTH_SCOPE = "repo";
+const GITHUB_API_BASE = "https://api.github.com";
+const GITHUB_API_VERSION = "2022-11-28";
 const PHOTO_PLACEHOLDER = "/assets/placeholders/recipe-photo.svg";
 const IMPORT_FALLBACK_ASPECT_RATIO = 16 / 6;
 const IMPORT_FALLBACK_MAX_WIDTH = 1600;
@@ -44,6 +56,7 @@ const appState = {
   uploadedFallbackPhotoDataUrl: "",
   urlFallbackPhotoSrc: "",
   draft: createEmptyDraft(),
+  github: createGithubState(),
 };
 
 const refs = {
@@ -90,6 +103,24 @@ const refs = {
   copyManifest: document.querySelector("#copy-manifest-json"),
   downloadRecipe: document.querySelector("#download-recipe-json"),
   photoText: document.querySelector("#photo-text"),
+  githubClientId: document.querySelector("#github-client-id"),
+  githubOwner: document.querySelector("#github-owner"),
+  githubRepo: document.querySelector("#github-repo"),
+  githubBaseBranch: document.querySelector("#github-base-branch"),
+  githubConnect: document.querySelector("#github-connect"),
+  githubOpenDevice: document.querySelector("#github-open-device"),
+  githubLogout: document.querySelector("#github-logout"),
+  githubDeviceShell: document.querySelector("#github-device-shell"),
+  githubDeviceCode: document.querySelector("#github-device-code"),
+  githubDeviceMeta: document.querySelector("#github-device-meta"),
+  githubAuthStatus: document.querySelector("#github-auth-status"),
+  githubSubmissionMode: document.querySelector("#github-submission-mode"),
+  githubLoadSlug: document.querySelector("#github-load-slug"),
+  githubLoadRecipe: document.querySelector("#github-load-recipe"),
+  githubSubmitPr: document.querySelector("#github-submit-pr"),
+  githubLoadStatus: document.querySelector("#github-load-status"),
+  githubSubmitStatus: document.querySelector("#github-submit-status"),
+  githubResult: document.querySelector("#github-result"),
 };
 
 bootstrap();
@@ -97,6 +128,15 @@ bootstrap();
 function bootstrap() {
   refs.apiKey.value = localStorage.getItem(STORAGE_KEY) ?? "";
   refs.apiModel.value = localStorage.getItem(MODEL_KEY) ?? DEFAULT_MODEL;
+  refs.githubClientId.value = localStorage.getItem(GITHUB_CLIENT_ID_KEY) ?? "";
+  refs.githubOwner.value = localStorage.getItem(GITHUB_OWNER_KEY) ?? DEFAULT_GITHUB_OWNER;
+  refs.githubRepo.value = localStorage.getItem(GITHUB_REPO_KEY) ?? DEFAULT_GITHUB_REPO;
+  refs.githubBaseBranch.value = localStorage.getItem(GITHUB_BASE_BRANCH_KEY) ?? DEFAULT_GITHUB_BASE_BRANCH;
+  appState.github.token = localStorage.getItem(GITHUB_TOKEN_KEY) ?? "";
+  appState.github.user = readStoredGithubUser();
+  appState.github.owner = refs.githubOwner.value.trim() || DEFAULT_GITHUB_OWNER;
+  appState.github.repo = refs.githubRepo.value.trim() || DEFAULT_GITHUB_REPO;
+  appState.github.baseBranch = refs.githubBaseBranch.value.trim() || DEFAULT_GITHUB_BASE_BRANCH;
 
   refs.apiKey.addEventListener("change", () => {
     localStorage.setItem(STORAGE_KEY, refs.apiKey.value.trim());
@@ -105,6 +145,12 @@ function bootstrap() {
   refs.apiModel.addEventListener("change", () => {
     localStorage.setItem(MODEL_KEY, refs.apiModel.value.trim() || DEFAULT_MODEL);
   });
+
+  refs.githubClientId.addEventListener("change", () => {
+    localStorage.setItem(GITHUB_CLIENT_ID_KEY, refs.githubClientId.value.trim());
+  });
+
+  bindGithubSettings();
 
   refs.modeTabs.forEach((tab) => {
     tab.addEventListener("click", () => setMode(tab.dataset.mode));
@@ -122,6 +168,11 @@ function bootstrap() {
   refs.fetchUrl.addEventListener("click", fetchReadableUrl);
   refs.generateDraft.addEventListener("click", generateDraft);
   refs.resetDraft.addEventListener("click", resetDraft);
+  refs.githubConnect.addEventListener("click", startGithubDeviceFlow);
+  refs.githubOpenDevice.addEventListener("click", openGithubDeviceVerification);
+  refs.githubLogout.addEventListener("click", logoutGithub);
+  refs.githubLoadRecipe.addEventListener("click", loadRecipeFromGithub);
+  refs.githubSubmitPr.addEventListener("click", submitDraftToGithub);
   refs.addIngredient.addEventListener("click", () => {
     appState.draft.ingredients.push(createIngredientDraft());
     syncFormFromDraft();
@@ -138,6 +189,7 @@ function bootstrap() {
   bindTopLevelFields();
   bindCopyButtons();
   syncFormFromDraft();
+  syncGithubUi();
 }
 
 function bindTopLevelFields() {
@@ -194,10 +246,366 @@ function bindCopyButtons() {
   refs.downloadRecipe.addEventListener("click", downloadRecipeSource);
 }
 
+function bindGithubSettings() {
+  refs.githubOwner.addEventListener("input", () => {
+    appState.github.owner = refs.githubOwner.value.trim() || DEFAULT_GITHUB_OWNER;
+    localStorage.setItem(GITHUB_OWNER_KEY, appState.github.owner);
+  });
+
+  refs.githubRepo.addEventListener("input", () => {
+    appState.github.repo = refs.githubRepo.value.trim() || DEFAULT_GITHUB_REPO;
+    localStorage.setItem(GITHUB_REPO_KEY, appState.github.repo);
+  });
+
+  refs.githubBaseBranch.addEventListener("input", () => {
+    appState.github.baseBranch = refs.githubBaseBranch.value.trim() || DEFAULT_GITHUB_BASE_BRANCH;
+    localStorage.setItem(GITHUB_BASE_BRANCH_KEY, appState.github.baseBranch);
+  });
+
+  refs.githubSubmissionMode.addEventListener("change", () => {
+    appState.github.submissionMode = refs.githubSubmissionMode.value;
+    syncGithubUi();
+  });
+
+  refs.githubLoadSlug.addEventListener("input", () => {
+    if (!refs.slug.dataset.manuallyEdited) {
+      appState.draft.slug = refs.githubLoadSlug.value.trim();
+      refreshOutputs();
+    }
+  });
+}
+
 function setMode(mode) {
   appState.mode = mode;
   refs.modeTabs.forEach((tab) => tab.classList.toggle("is-active", tab.dataset.mode === mode));
   refs.modePanels.forEach((panel) => panel.classList.toggle("is-active", panel.id === `mode-${mode}`));
+}
+
+function createGithubState() {
+  return {
+    token: "",
+    user: null,
+    owner: DEFAULT_GITHUB_OWNER,
+    repo: DEFAULT_GITHUB_REPO,
+    baseBranch: DEFAULT_GITHUB_BASE_BRANCH,
+    submissionMode: "create",
+    loadedRecipe: null,
+    deviceFlow: null,
+  };
+}
+
+function readStoredGithubUser() {
+  const raw = localStorage.getItem(GITHUB_USER_KEY);
+  if (!raw) {
+    return null;
+  }
+
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function syncGithubUi() {
+  refs.githubSubmissionMode.value = appState.github.submissionMode;
+  refs.githubOpenDevice.disabled = !appState.github.deviceFlow?.verificationUri;
+  refs.githubLogout.disabled = !appState.github.token;
+  refs.githubLoadRecipe.disabled = !appState.github.token;
+  refs.githubSubmitPr.disabled = !appState.github.token;
+  refs.githubDeviceShell.classList.toggle("is-hidden", !appState.github.deviceFlow);
+
+  if (appState.github.deviceFlow) {
+    refs.githubDeviceCode.textContent = appState.github.deviceFlow.userCode;
+    refs.githubDeviceMeta.textContent = `Open ${appState.github.deviceFlow.verificationUri} and enter the code before it expires.`;
+  } else {
+    refs.githubDeviceCode.textContent = "Not started";
+    refs.githubDeviceMeta.textContent = "";
+  }
+
+  if (appState.github.user) {
+    refs.githubAuthStatus.textContent = `Connected to GitHub as ${appState.github.user.login}.`;
+  } else {
+    refs.githubAuthStatus.textContent = "GitHub is not connected.";
+  }
+}
+
+async function startGithubDeviceFlow() {
+  const clientId = refs.githubClientId.value.trim();
+  if (!clientId) {
+    setGithubAuthStatus("Add a GitHub OAuth client ID first.");
+    return;
+  }
+
+  setGithubAuthStatus("Requesting GitHub device code...");
+  clearGithubResult();
+
+  const response = await fetch("https://github.com/login/device/code", {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({
+      client_id: clientId,
+      scope: GITHUB_OAUTH_SCOPE,
+    }),
+  });
+
+  const payload = await response.json().catch(() => ({}));
+  if (!response.ok || !payload.device_code) {
+    setGithubAuthStatus(`GitHub device flow failed: ${payload.error_description || payload.error || "unknown error"}.`);
+    return;
+  }
+
+  appState.github.deviceFlow = {
+    deviceCode: payload.device_code,
+    userCode: payload.user_code,
+    verificationUri: payload.verification_uri,
+    interval: Number(payload.interval || 5),
+    expiresAt: Date.now() + Number(payload.expires_in || 900) * 1000,
+  };
+
+  syncGithubUi();
+  setGithubAuthStatus("Authorize the builder on GitHub. Polling for approval...");
+  openGithubDeviceVerification();
+  await pollGithubDeviceFlow();
+}
+
+function openGithubDeviceVerification() {
+  const verificationUri = appState.github.deviceFlow?.verificationUri;
+  if (!verificationUri) {
+    setGithubAuthStatus("Start device flow first.");
+    return;
+  }
+
+  window.open(verificationUri, "_blank", "noopener,noreferrer");
+}
+
+async function pollGithubDeviceFlow() {
+  const clientId = refs.githubClientId.value.trim();
+  if (!clientId || !appState.github.deviceFlow) {
+    return;
+  }
+
+  let interval = appState.github.deviceFlow.interval;
+
+  while (appState.github.deviceFlow && Date.now() < appState.github.deviceFlow.expiresAt) {
+    await delay(interval * 1000);
+
+    const response = await fetch("https://github.com/login/oauth/access_token", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        client_id: clientId,
+        device_code: appState.github.deviceFlow.deviceCode,
+        grant_type: "urn:ietf:params:oauth:grant-type:device_code",
+      }),
+    });
+
+    const payload = await response.json().catch(() => ({}));
+
+    if (payload.access_token) {
+      appState.github.token = payload.access_token;
+      localStorage.setItem(GITHUB_TOKEN_KEY, appState.github.token);
+      appState.github.deviceFlow = null;
+      await hydrateGithubUser();
+      syncGithubUi();
+      setGithubAuthStatus("GitHub connected.");
+      return;
+    }
+
+    if (payload.error === "authorization_pending") {
+      continue;
+    }
+
+    if (payload.error === "slow_down") {
+      interval += 5;
+      continue;
+    }
+
+    appState.github.deviceFlow = null;
+    syncGithubUi();
+    setGithubAuthStatus(`GitHub authorization failed: ${payload.error_description || payload.error || "unknown error"}.`);
+    return;
+  }
+
+  appState.github.deviceFlow = null;
+  syncGithubUi();
+  setGithubAuthStatus("GitHub device code expired. Start the flow again.");
+}
+
+async function hydrateGithubUser() {
+  const user = await githubApi("/user");
+  appState.github.user = {
+    login: user.login,
+    htmlUrl: user.html_url,
+  };
+  localStorage.setItem(GITHUB_USER_KEY, JSON.stringify(appState.github.user));
+}
+
+function logoutGithub() {
+  appState.github.token = "";
+  appState.github.user = null;
+  appState.github.deviceFlow = null;
+  appState.github.loadedRecipe = null;
+  localStorage.removeItem(GITHUB_TOKEN_KEY);
+  localStorage.removeItem(GITHUB_USER_KEY);
+  setGithubAuthStatus("GitHub signed out locally.");
+  setGithubLoadStatus("");
+  setGithubSubmitStatus("");
+  clearGithubResult();
+  syncGithubUi();
+}
+
+async function loadRecipeFromGithub() {
+  try {
+    assertGithubReady();
+    setGithubLoadStatus("Loading recipe from GitHub...");
+    clearGithubResult();
+
+    const slug = (refs.githubLoadSlug.value.trim() || appState.draft.slug).trim();
+    if (!slug) {
+      throw new Error("Add a recipe slug to load.");
+    }
+
+    const path = `src/content/recipes/${slug}.md`;
+    const file = await getGithubFile(path, appState.github.baseBranch);
+    const sourceText = decodeBase64Content(file.content);
+    const parsedSource = parseRecipeSourceFile(sourceText);
+    const draft = draftFromRecipeSource(parsedSource);
+    draft.slug = slug;
+
+    appState.draft = normalizeDraft(draft);
+    refs.slug.dataset.manuallyEdited = "true";
+    appState.github.loadedRecipe = {
+      slug,
+      path,
+      sha: file.sha,
+      sourceText,
+      existingImagePath: draft.fallbackPhoto,
+    };
+    appState.github.submissionMode = "edit";
+    clearUploadedPhotoSelection();
+    syncFormFromDraft();
+    setGithubLoadStatus(`Loaded ${slug} from ${appState.github.owner}/${appState.github.repo}.`);
+  } catch (error) {
+    console.error(error);
+    setGithubLoadStatus(error.message || "GitHub recipe load failed.");
+  }
+}
+
+async function submitDraftToGithub() {
+  try {
+    assertGithubReady();
+    setGithubSubmitStatus("Preparing GitHub pull request...");
+    clearGithubResult();
+
+    const slug = appState.draft.slug.trim();
+    if (!slug) {
+      throw new Error("Add a recipe title or slug before submitting.");
+    }
+
+    if (appState.github.submissionMode === "edit") {
+      if (!appState.github.loadedRecipe) {
+        throw new Error("Load an existing recipe from GitHub before using edit mode.");
+      }
+
+      if (appState.github.loadedRecipe.slug !== slug) {
+        throw new Error("Slug changes are not supported in edit mode. Switch to create mode or reload the recipe.");
+      }
+    }
+
+    setGithubSubmitStatus("Creating branch...");
+    const baseRef = await githubApi(`/repos/${encodeURIComponent(appState.github.owner)}/${encodeURIComponent(appState.github.repo)}/git/ref/heads/${encodeURIComponent(appState.github.baseBranch)}`);
+    const branchName = buildGithubBranchName(slug, appState.github.submissionMode);
+    await githubApi(`/repos/${encodeURIComponent(appState.github.owner)}/${encodeURIComponent(appState.github.repo)}/git/refs`, {
+      method: "POST",
+      body: {
+        ref: `refs/heads/${branchName}`,
+        sha: baseRef.object.sha,
+      },
+    });
+
+    const submissionDraft = prepareDraftForGithubSubmission(appState.draft);
+    const recipePath = `src/content/recipes/${slug}.md`;
+    const assetUpload = buildGithubAssetUpload(slug, submissionDraft);
+    let changedAsset = null;
+
+    if (appState.github.submissionMode === "create") {
+      const existingRecipe = await findGithubFile(recipePath, appState.github.baseBranch);
+      if (existingRecipe) {
+        throw new Error(`A recipe already exists at ${recipePath}. Load it in edit mode or change the slug.`);
+      }
+    }
+
+    if (assetUpload) {
+      setGithubSubmitStatus("Uploading hero image...");
+      const existingAsset = await findGithubFile(assetUpload.repoPath, appState.github.baseBranch);
+      await putGithubFile({
+        path: assetUpload.repoPath,
+        branch: branchName,
+        message: `${appState.github.submissionMode === "create" ? "Add" : "Update"} hero image for ${submissionDraft.title}`,
+        content: assetUpload.base64Content,
+        sha: existingAsset?.sha,
+      });
+      submissionDraft.primaryPhoto = "";
+      submissionDraft.fallbackPhoto = assetUpload.sitePath;
+      changedAsset = assetUpload.repoPath;
+    }
+
+    setGithubSubmitStatus("Uploading recipe source...");
+    const compiled = compileDraft(submissionDraft);
+    const existingRecipeForWrite = appState.github.submissionMode === "edit"
+      ? appState.github.loadedRecipe
+      : await findGithubFile(recipePath, appState.github.baseBranch);
+
+    if (
+      appState.github.submissionMode === "edit" &&
+      !changedAsset &&
+      appState.github.loadedRecipe?.sourceText === compiled.recipeSource
+    ) {
+      throw new Error("There are no recipe content changes to submit.");
+    }
+
+    await putGithubFile({
+      path: recipePath,
+      branch: branchName,
+      message: `${appState.github.submissionMode === "create" ? "Add" : "Update"} recipe ${submissionDraft.title}`,
+      content: utf8ToBase64(compiled.recipeSource),
+      sha: existingRecipeForWrite?.sha,
+    });
+
+    setGithubSubmitStatus("Opening pull request...");
+    const pull = await githubApi(`/repos/${encodeURIComponent(appState.github.owner)}/${encodeURIComponent(appState.github.repo)}/pulls`, {
+      method: "POST",
+      body: {
+        title: buildGithubPullRequestTitle(submissionDraft.title, appState.github.submissionMode),
+        head: branchName,
+        base: appState.github.baseBranch,
+        body: buildGithubPullRequestBody({
+          draft: submissionDraft,
+          mode: appState.github.submissionMode,
+          recipePath,
+          assetPath: changedAsset,
+        }),
+      },
+    });
+
+    setGithubSubmitStatus("Pull request created.");
+    refs.githubResult.innerHTML = `PR ready: <a href="${pull.html_url}" target="_blank" rel="noreferrer">${pull.html_url}</a>`;
+
+    if (appState.github.submissionMode === "edit" && existingRecipeForWrite) {
+      appState.github.loadedRecipe.sha = existingRecipeForWrite.sha;
+      appState.github.loadedRecipe.sourceText = compiled.recipeSource;
+    }
+  } catch (error) {
+    console.error(error);
+    setGithubSubmitStatus(error.message || "GitHub pull request submission failed.");
+  }
 }
 
 async function fetchReadableUrl() {
@@ -936,11 +1344,13 @@ function syncFormFromDraft() {
   refs.fallbackPhoto.value = appState.draft.fallbackPhoto;
   refs.photoCreditText.value = appState.draft.photoCreditText;
   refs.photoCreditUrl.value = appState.draft.photoCreditUrl;
+  refs.githubLoadSlug.value = appState.github.loadedRecipe?.slug ?? appState.draft.slug;
 
   renderIngredientsEditor();
   renderStepsEditor();
   renderNotesEditor();
   refreshOutputs();
+  syncGithubUi();
 }
 
 function renderIngredientsEditor() {
@@ -1435,6 +1845,421 @@ function buildRecipeSourceFile(recipe) {
   return `---\n${toYaml(source)}---\n`;
 }
 
+function parseRecipeSourceFile(sourceText) {
+  const normalized = sourceText.replace(/\r/g, "");
+  const match = normalized.match(/^---\n([\s\S]*?)\n---\s*$/);
+  if (!match) {
+    throw new Error("Recipe file is missing YAML frontmatter.");
+  }
+
+  return parseYamlSubset(match[1]);
+}
+
+function parseYamlSubset(yamlText) {
+  const lines = yamlText.split("\n");
+  const { value } = parseYamlObject(lines, 0, 0);
+  return value;
+}
+
+function parseYamlObject(lines, startIndex, indent) {
+  const value = {};
+  let index = startIndex;
+
+  while (index < lines.length) {
+    const line = lines[index];
+    if (!line.trim()) {
+      index += 1;
+      continue;
+    }
+
+    const lineIndent = getLineIndent(line);
+    if (lineIndent < indent) {
+      break;
+    }
+    if (lineIndent > indent) {
+      index += 1;
+      continue;
+    }
+
+    const trimmed = line.trim();
+    if (trimmed.startsWith("- ")) {
+      break;
+    }
+
+    const separatorIndex = trimmed.indexOf(":");
+    if (separatorIndex === -1) {
+      throw new Error(`Unsupported YAML line: ${trimmed}`);
+    }
+
+    const key = trimmed.slice(0, separatorIndex).trim();
+    const remainder = trimmed.slice(separatorIndex + 1).trim();
+
+    if (remainder) {
+      value[key] = parseYamlScalar(remainder);
+      index += 1;
+      continue;
+    }
+
+    const nextIndex = findNextNonEmptyLine(lines, index + 1);
+    if (nextIndex === -1 || getLineIndent(lines[nextIndex]) <= lineIndent) {
+      value[key] = "";
+      index += 1;
+      continue;
+    }
+
+    if (lines[nextIndex].trim().startsWith("- ")) {
+      const parsed = parseYamlArray(lines, nextIndex, lineIndent + 2);
+      value[key] = parsed.value;
+      index = parsed.index;
+    } else {
+      const parsed = parseYamlObject(lines, nextIndex, lineIndent + 2);
+      value[key] = parsed.value;
+      index = parsed.index;
+    }
+  }
+
+  return { value, index };
+}
+
+function parseYamlArray(lines, startIndex, indent) {
+  const value = [];
+  let index = startIndex;
+
+  while (index < lines.length) {
+    const line = lines[index];
+    if (!line.trim()) {
+      index += 1;
+      continue;
+    }
+
+    const lineIndent = getLineIndent(line);
+    if (lineIndent < indent) {
+      break;
+    }
+    if (lineIndent !== indent) {
+      index += 1;
+      continue;
+    }
+
+    const trimmed = line.trim();
+    if (!trimmed.startsWith("- ")) {
+      break;
+    }
+
+    const remainder = trimmed.slice(2).trim();
+    if (!remainder) {
+      const nextIndex = findNextNonEmptyLine(lines, index + 1);
+      if (nextIndex === -1) {
+        value.push("");
+        index += 1;
+        continue;
+      }
+
+      if (lines[nextIndex].trim().startsWith("- ")) {
+        const parsed = parseYamlArray(lines, nextIndex, indent + 2);
+        value.push(parsed.value);
+        index = parsed.index;
+      } else {
+        const parsed = parseYamlObject(lines, nextIndex, indent + 2);
+        value.push(parsed.value);
+        index = parsed.index;
+      }
+      continue;
+    }
+
+    const separatorIndex = remainder.indexOf(":");
+    if (separatorIndex !== -1) {
+      const key = remainder.slice(0, separatorIndex).trim();
+      const scalarRemainder = remainder.slice(separatorIndex + 1).trim();
+      const item = {};
+
+      if (scalarRemainder) {
+        item[key] = parseYamlScalar(scalarRemainder);
+      } else {
+        item[key] = "";
+      }
+
+      const parsed = parseYamlObject(lines, index + 1, indent + 2);
+      Object.assign(item, parsed.value);
+      value.push(item);
+      index = parsed.index;
+      continue;
+    }
+
+    value.push(parseYamlScalar(remainder));
+    index += 1;
+  }
+
+  return { value, index };
+}
+
+function getLineIndent(line) {
+  return line.match(/^ */)[0].length;
+}
+
+function findNextNonEmptyLine(lines, startIndex) {
+  for (let index = startIndex; index < lines.length; index += 1) {
+    if (lines[index].trim()) {
+      return index;
+    }
+  }
+
+  return -1;
+}
+
+function parseYamlScalar(rawValue) {
+  if (rawValue === '""') {
+    return "";
+  }
+
+  if (rawValue === "true") {
+    return true;
+  }
+
+  if (rawValue === "false") {
+    return false;
+  }
+
+  if (/^-?\d+(?:\.\d+)?$/.test(rawValue)) {
+    return Number(rawValue);
+  }
+
+  if (rawValue.startsWith('"') && rawValue.endsWith('"')) {
+    return JSON.parse(rawValue);
+  }
+
+  return rawValue;
+}
+
+function draftFromRecipeSource(source) {
+  const ingredients = Array.isArray(source.ingredients) ? source.ingredients : [];
+
+  return {
+    title: source.title ?? "",
+    slug: "",
+    description: source.description ?? "",
+    category: source.category ?? "Recipe",
+    tags: Array.isArray(source.tags) ? source.tags : [],
+    searchTags: Array.isArray(source.searchTags) ? source.searchTags : [],
+    baseYield: Number(source.baseYield || 1),
+    yieldLabel: source.yieldLabel ?? "servings",
+    heroTitle: source.heroTitle ?? source.title ?? "",
+    heroCopy: source.heroCopy ?? source.description ?? "",
+    ingredientsHeading: source.ingredientsHeading ?? "Ingredients",
+    methodHeading: source.methodHeading ?? "Method",
+    notesHeading: source.notesHeading ?? "Notes",
+    photoAlt: source.photoAlt ?? "",
+    primaryPhoto: source.primaryPhoto ?? "",
+    fallbackPhoto: source.fallbackPhoto ?? "",
+    photoCreditText: source.photoCreditText ?? "",
+    photoCreditUrl: source.photoCreditUrl ?? "",
+    ingredients: ingredients.map((ingredient) => createIngredientDraft({
+      name: ingredient.name ?? "",
+      quantity: Number(ingredient.quantity || 1),
+      unit: ingredient.unit === "count" ? "count" : ingredient.unit ?? "g",
+      countable: ingredient.unit === "count" || Boolean(ingredient.format?.countable),
+      fractions: Boolean(ingredient.format?.fractions),
+      singular: ingredient.format?.singular ?? "",
+      plural: ingredient.format?.plural ?? "",
+    })),
+    stepsText: Array.isArray(source.steps)
+      ? source.steps.map((step) => sourceStepToDraftText(step, ingredients))
+      : [""],
+    notes: Array.isArray(source.notes) ? source.notes : [""],
+  };
+}
+
+function sourceStepToDraftText(stepText, ingredients) {
+  const ingredientMap = new Map(ingredients.map((ingredient) => [ingredient.id, ingredient]));
+  return stepText.replace(/\[\[([\s\S]+?)\]\]/g, (_, tokenText) => {
+    const [id, ...attributes] = tokenText.split("|").map((part) => part.trim()).filter(Boolean);
+    const ingredient = ingredientMap.get(id);
+    if (!ingredient) {
+      return `[[${tokenText}]]`;
+    }
+
+    const token = { displayName: "", displayMode: "", quantity: undefined };
+    attributes.forEach((attribute) => {
+      const [key, rawValue] = attribute.split("=");
+      const value = rawValue?.trim() ?? "";
+      if (key === "display") {
+        token.displayName = value;
+      } else if (key === "mode") {
+        token.displayMode = value;
+      } else if (key === "quantity") {
+        token.quantity = Number(value);
+      }
+    });
+
+    if (token.quantity != null && !Number.isNaN(token.quantity)) {
+      return formatDraftIngredientReference(ingredient, token.quantity, token.displayName, token.displayMode);
+    }
+
+    return token.displayName || ingredient.name;
+  });
+}
+
+function formatDraftIngredientReference(ingredient, quantity, displayName = "", displayMode = "") {
+  const scaled = {
+    ...ingredient,
+    scaledQuantity: quantity,
+    displayName: displayName || "",
+  };
+
+  if (displayMode === "amountOnly") {
+    return formatDraftIngredient(scaled, "amountOnly");
+  }
+
+  return formatDraftIngredient(scaled, "full");
+}
+
+function formatDraftIngredient(ingredient, mode = "full") {
+  const labelOverride = ingredient.displayName?.trim();
+
+  if (hasFreeTextUnit(ingredient.unit)) {
+    if (mode === "amountOnly") {
+      return ingredient.unit;
+    }
+
+    return `${labelOverride || ingredient.name} ${ingredient.unit}`.trim();
+  }
+
+  const amount = formatDraftQuantity(ingredient.scaledQuantity, ingredient);
+
+  if (ingredient.unit === "count") {
+    if (mode === "amountOnly") {
+      return amount;
+    }
+
+    if (labelOverride) {
+      return `${amount} ${labelOverride}`;
+    }
+
+    const singular = ingredient.format?.singular || singularize(ingredient.name);
+    const plural = ingredient.format?.plural || pluralize(ingredient.name);
+    return `${amount} ${ingredient.scaledQuantity === 1 ? singular : plural}`;
+  }
+
+  if (mode === "amountOnly") {
+    return amount;
+  }
+
+  return `${amount} ${labelOverride || ingredient.name}`;
+}
+
+function formatDraftQuantity(quantity, ingredient) {
+  if (ingredient.unit === "count") {
+    return String(quantity);
+  }
+
+  return `${formatDraftNumber(quantity, ingredient.format ?? {})}${ingredient.unit}`;
+}
+
+function formatDraftNumber(quantity, format) {
+  if (format.fractions) {
+    const fraction = toFractionString(quantity);
+    if (fraction) {
+      return fraction;
+    }
+  }
+
+  const decimals = format.decimals ?? (Number.isInteger(quantity) ? 0 : 2);
+  return stripTrailingZeros(Number(quantity.toFixed(decimals)));
+}
+
+function prepareDraftForGithubSubmission(draft) {
+  return normalizeDraft({
+    ...draft,
+    primaryPhoto: draft.primaryPhoto.trim(),
+    fallbackPhoto: draft.fallbackPhoto.trim(),
+    photoCreditText: draft.photoCreditText.trim(),
+    photoCreditUrl: draft.photoCreditUrl.trim(),
+  });
+}
+
+function buildGithubAssetUpload(slug, draft) {
+  const sourceDataUrl = appState.uploadedPhotoDataUrl || (String(draft.fallbackPhoto).startsWith("data:") ? draft.fallbackPhoto : "");
+  if (!sourceDataUrl) {
+    return null;
+  }
+
+  const mimeMatch = sourceDataUrl.match(/^data:(image\/[a-z0-9.+-]+);base64,(.+)$/i);
+  if (!mimeMatch) {
+    return null;
+  }
+
+  const extension = imageExtensionFromMimeType(mimeMatch[1]);
+  const repoPath = `public/assets/recipes/${slug}/hero.${extension}`;
+  return {
+    repoPath,
+    sitePath: `/assets/recipes/${slug}/hero.${extension}`,
+    base64Content: mimeMatch[2],
+  };
+}
+
+function imageExtensionFromMimeType(mimeType) {
+  if (mimeType.includes("png")) {
+    return "png";
+  }
+  if (mimeType.includes("webp")) {
+    return "webp";
+  }
+  return "jpg";
+}
+
+function buildGithubBranchName(slug, mode) {
+  return `recipe/${slugify(slug) || "draft"}/${mode}-${new Date().toISOString().replace(/[:.]/g, "-")}`;
+}
+
+function buildGithubPullRequestTitle(title, mode) {
+  return `${mode === "create" ? "Add" : "Update"} recipe: ${title}`;
+}
+
+function buildGithubPullRequestBody({ draft, mode, recipePath, assetPath }) {
+  return [
+    `Generated from the local recipe builder in **${mode}** mode.`,
+    "",
+    `- Recipe: ${draft.title}`,
+    `- Slug: ${draft.slug}`,
+    `- Recipe file: \`${recipePath}\``,
+    `- Hero image changed: ${assetPath ? `yes (\`${assetPath}\`)` : "no"}`,
+    "",
+    "Review the recipe content, image path, and generated metadata before merging.",
+  ].join("\n");
+}
+
+function stripTrailingZeros(value) {
+  return value.toString().replace(/\.0+$/, "").replace(/(\.\d*?)0+$/, "$1");
+}
+
+function toFractionString(quantity) {
+  const whole = Math.floor(quantity);
+  const fraction = quantity - whole;
+  const tolerance = 0.08;
+  const fractions = [
+    { value: 0.25, label: "1/4" },
+    { value: 1 / 3, label: "1/3" },
+    { value: 0.5, label: "1/2" },
+    { value: 2 / 3, label: "2/3" },
+    { value: 0.75, label: "3/4" },
+  ];
+  const match = fractions.find((candidate) => Math.abs(fraction - candidate.value) <= tolerance);
+
+  if (!match) {
+    return null;
+  }
+
+  if (whole === 0) {
+    return match.label;
+  }
+
+  return `${whole} ${match.label}`;
+}
+
+function hasFreeTextUnit(unit) {
+  return typeof unit === "string" && /\s/.test(unit.trim()) && unit !== "count";
+}
+
 function toYaml(value, indent = 0) {
   const pad = " ".repeat(indent);
 
@@ -1554,6 +2379,8 @@ function normalizeDraft(draft) {
 
 function resetDraft() {
   appState.draft = createEmptyDraft();
+  appState.github.loadedRecipe = null;
+  appState.github.submissionMode = "create";
   refs.plainText.value = "";
   refs.recipeUrl.value = "";
   refs.urlText.value = "";
@@ -1566,6 +2393,9 @@ function resetDraft() {
   refs.slug.dataset.manuallyEdited = "";
   syncFormFromDraft();
   setStatus("Draft reset.");
+  setGithubLoadStatus("");
+  setGithubSubmitStatus("");
+  clearGithubResult();
 }
 
 function splitCommaList(input) {
@@ -1622,6 +2452,129 @@ function downloadRecipeSource() {
   link.click();
   URL.revokeObjectURL(url);
   setStatus("Recipe source downloaded.");
+}
+
+function setGithubAuthStatus(message) {
+  refs.githubAuthStatus.textContent = message;
+}
+
+function setGithubLoadStatus(message) {
+  refs.githubLoadStatus.textContent = message;
+}
+
+function setGithubSubmitStatus(message) {
+  refs.githubSubmitStatus.textContent = message;
+}
+
+function clearGithubResult() {
+  refs.githubResult.textContent = "";
+}
+
+function clearUploadedPhotoSelection() {
+  refs.photoInput.value = "";
+  refs.photoPreview.removeAttribute("src");
+  appState.uploadedPhotoDataUrl = "";
+  appState.uploadedFallbackPhotoDataUrl = "";
+}
+
+function assertGithubReady() {
+  if (!appState.github.token) {
+    throw new Error("Connect GitHub first.");
+  }
+
+  if (!appState.github.owner || !appState.github.repo || !appState.github.baseBranch) {
+    throw new Error("Complete the GitHub repository settings first.");
+  }
+}
+
+async function githubApi(path, options = {}) {
+  const { method = "GET", body, headers = {}, accept = "application/vnd.github+json" } = options;
+  const requestHeaders = {
+    Accept: accept,
+    Authorization: `Bearer ${appState.github.token}`,
+    "X-GitHub-Api-Version": GITHUB_API_VERSION,
+    ...headers,
+  };
+
+  if (body) {
+    requestHeaders["Content-Type"] = "application/json";
+  }
+
+  const response = await fetch(`${GITHUB_API_BASE}${path}`, {
+    method,
+    headers: requestHeaders,
+    body: body ? JSON.stringify(body) : undefined,
+  });
+
+  if (response.status === 401 || response.status === 403) {
+    logoutGithub();
+    throw new Error("GitHub authorization expired or lacks access to this repository.");
+  }
+
+  if (response.status === 404) {
+    const error = new Error("GitHub resource not found.");
+    error.status = 404;
+    throw error;
+  }
+
+  if (!response.ok) {
+    const payload = await response.json().catch(() => ({}));
+    throw new Error(payload.message || `GitHub request failed with ${response.status}.`);
+  }
+
+  if (response.status === 204) {
+    return null;
+  }
+
+  return response.json();
+}
+
+async function getGithubFile(path, ref) {
+  return githubApi(`/repos/${encodeURIComponent(appState.github.owner)}/${encodeURIComponent(appState.github.repo)}/contents/${path.split("/").map(encodeURIComponent).join("/")}?ref=${encodeURIComponent(ref)}`);
+}
+
+async function findGithubFile(path, ref) {
+  try {
+    return await getGithubFile(path, ref);
+  } catch (error) {
+    if (error.status === 404) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+async function putGithubFile({ path, branch, message, content, sha }) {
+  return githubApi(`/repos/${encodeURIComponent(appState.github.owner)}/${encodeURIComponent(appState.github.repo)}/contents/${path.split("/").map(encodeURIComponent).join("/")}`, {
+    method: "PUT",
+    body: {
+      message,
+      content,
+      branch,
+      sha,
+      committer: appState.github.user
+        ? {
+            name: appState.github.user.login,
+            email: `${appState.github.user.login}@users.noreply.github.com`,
+          }
+        : undefined,
+    },
+  });
+}
+
+function decodeBase64Content(value) {
+  return decodeURIComponent(escape(atob(String(value || "").replace(/\n/g, ""))));
+}
+
+function utf8ToBase64(value) {
+  return btoa(unescape(encodeURIComponent(value)));
+}
+
+function delay(ms) {
+  return new Promise((resolve) => {
+    window.setTimeout(resolve, ms);
+  });
 }
 
 function setStatus(message) {

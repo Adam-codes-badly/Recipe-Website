@@ -115,12 +115,14 @@ label span {
 }
 
 input,
+select,
 textarea,
 button {
   font: inherit;
 }
 
 input,
+select,
 textarea {
   width: 100%;
   padding: 0.85rem 0.95rem;
@@ -135,6 +137,7 @@ textarea {
 }
 
 input:focus,
+select:focus,
 textarea:focus {
   outline: 2px solid rgba(182, 79, 40, 0.26);
   outline-offset: 2px;
@@ -202,6 +205,44 @@ button:focus-visible {
   width: 100%;
   max-height: 360px;
   object-fit: contain;
+}
+
+.github-block {
+  margin-top: 1.4rem;
+  padding-top: 1.2rem;
+  border-top: 1px solid var(--line);
+}
+
+.github-heading {
+  margin-bottom: 0.6rem;
+}
+
+.github-workflow-grid {
+  margin-top: 0.3rem;
+}
+
+.device-shell {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px dashed rgba(182, 79, 40, 0.35);
+  border-radius: var(--radius-md);
+  background: rgba(255, 255, 255, 0.58);
+}
+
+.device-shell.is-hidden {
+  display: none;
+}
+
+.device-code {
+  margin: 0.35rem 0 0;
+  font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+}
+
+.status-copy a {
+  color: var(--accent);
 }
 
 .collection-block {
